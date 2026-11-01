@@ -1,0 +1,30 @@
+{
+  "status": "adjustment_failed",
+  "detail": {
+    "code": "MODEL_FAILED",
+    "message": "调整建议生成失败，请稍后重试。"
+  },
+  "calls": [
+    {
+      "model": "deepseek-flash",
+      "elapsed_ms": 1024,
+      "status": "response",
+      "prompt_tokens": 872,
+      "completion_tokens": 28
+    },
+    {
+      "model": "deepseek-flash",
+      "elapsed_ms": 2970,
+      "status": "response",
+      "prompt_tokens": 951,
+      "completion_tokens": 333
+    },
+    {
+      "model": "deepseek-flash",
+      "elapsed_ms": 2580,
+      "status": "response",
+      "prompt_tokens": 1229,
+      "completion_tokens": 384
+    }
+  ]
+}

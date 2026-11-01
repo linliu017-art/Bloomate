@@ -1,0 +1,218 @@
+{
+  "started_at": "2026-11-01T00:03:18.554530+08:00",
+  "scope": "8 synthetic cases, non-thinking, up to three calls per case; no automatic retry",
+  "models": {
+    "deepseek": {
+      "model": "deepseek-flash",
+      "mode": "non-thinking",
+      "status": "done"
+    }
+  },
+  "cases": [
+    {
+      "model": "deepseek",
+      "case": "E06",
+      "initial": {
+        "kind": "habit",
+        "goal": "每周运动三次",
+        "background": "",
+        "availability": "每次20分钟",
+        "history": [
+          {
+            "question": "你希望把每周三次的20分钟运动安排在哪些具体日子（例如周一、周三、周五），还是由我给出一个默认安排？",
+            "answer": "计划持续4周，先从轻度活动开始"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望把每周三次的20分钟运动安排在哪些具体日子（例如周一、周三、周五），还是由我给出一个默认安排？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 216,
+            "completion_tokens": 37,
+            "total_tokens": 253,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 216
+          },
+          "seconds": 1.6,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "4周轻量起步：每周三次20分钟运动",
+              "summary": "每周安排3次、每次20分钟，持续4周，从轻度活动开始并逐周小幅递增。第1周以低强度适应为主；第2周加入少量力量练习；第3周延长有效运动时段；第4周巩固节奏。默认安排周一、周三、周六，可按实际情况等间隔调整。每次运动包含热身、主体和放松三部分。",
+              "steps": [
+                "安排时间：默认周一、周三、周六各20分钟；可等间隔换成其他三天，三次之间尽量隔一天。",
+                "第1周（轻度适应）：每次5分钟热身（慢走或原地踏步、关节活动）+10分钟轻松快走或低强度原地操+5分钟拉伸放松。",
+                "第2周（加入力量）：热身5分钟；主体10分钟为8分钟快走或低强度有氧加2分钟自重练习（如靠墙静蹲、扶椅深蹲各1组）；放松5分钟。",
+                "第3周（延长有效时段）：热身4分钟；主体12分钟（快走或低强度有氧10分钟+自重练习2分钟）；放松4分钟。",
+                "第4周（巩固节奏）：热身3分钟；主体14分钟（有氧与自重练习交替）；放松3分钟，并回顾4周感受。",
+                "每次结束记录：日期、时长、强度感受（轻松、适中、偏累）、身体不适情况，便于第4周复盘。",
+                "调整规则：若某次感到明显疲劳或不适，下一次退回上一周强度；漏掉一次不必补练，顺延到下一次即可。",
+                "第4周周末做一次10分钟复盘：看完成次数、强度感受，决定是否在下一周期维持或小幅增加主体时间。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 265,
+            "completion_tokens": 381,
+            "total_tokens": 646,
+            "prompt_tokens_details": {
+              "cached_tokens": 128
+            },
+            "prompt_cache_hit_tokens": 128,
+            "prompt_cache_miss_tokens": 137
+          },
+          "seconds": 3.31,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "E07",
+      "initial": {
+        "kind": "habit",
+        "goal": "每晚复盘",
+        "background": "",
+        "availability": "周一、三、五各10分钟",
+        "history": [
+          {
+            "question": "复盘时要记录哪些内容（例如当天完成的事、遇到的问题、明天的一个改进），以及你希望复盘后留下什么成果（如写几行笔记、打勾记录）？",
+            "answer": "持续两周，复盘记录一件做得好的事即可"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "复盘时要记录哪些内容（例如当天完成的事、遇到的问题、明天的一个改进），以及你希望复盘后留下什么成果（如写几行笔记、打勾记录）？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 220,
+            "completion_tokens": 45,
+            "total_tokens": 265,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 220
+          },
+          "seconds": 1.15,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "每晚复盘·两周版：每周3次、只记一件做得好的事",
+              "summary": "按你的可用时间，只在周一、周三、周五各花10分钟做“每晚复盘”，连续两周。每次只写一件当天做得好的事，不追求全面，重点是持续记录。",
+              "steps": [
+                "第1次（周一）10分钟：先在手机或笔记本上固定一个记录位置（如一条笔记/一页纸），写下日期和“今天做得好的事”，只写1条，写完打勾即结束。",
+                "第2次（周三）10分钟：打开同一记录位置，写下当天日期和1件做得好的事，写完打勾结束。",
+                "第3次（周五）10分钟：同上，记录1件做得好的事并打勾；这是第一周的第3次，周末不做。",
+                "第4次（下周一）10分钟：先花1分钟翻看前3条记录，再写下当天1件做得好的事，打勾结束。",
+                "第5次（下周三）10分钟：翻看并写下当天1件做得好的事，保持只写1条，不额外增加内容。",
+                "第6次（下周五）10分钟：写下第2周最后1条做得好的事并打勾；随后用2分钟数一下两周共留下几条记录，确认是否达到6条。",
+                "收尾：若6次都完成，说明这个节奏可行，可在下周继续沿用；若有缺次，下次只补回“当天写1条”的动作，不在一次里补写多条。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 278,
+            "completion_tokens": 337,
+            "total_tokens": 615,
+            "prompt_tokens_details": {
+              "cached_tokens": 128
+            },
+            "prompt_cache_hit_tokens": 128,
+            "prompt_cache_miss_tokens": 150
+          },
+          "seconds": 2.96,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "E08",
+      "initial": {
+        "kind": "goal",
+        "goal": "改善生活状态",
+        "background": "不愿提供健康细节",
+        "availability": "每天15分钟",
+        "history": [
+          {
+            "question": "你希望用这每天15分钟优先改善哪个方面，比如睡眠、精力、情绪还是日常节奏？",
+            "answer": "想从散步和规律作息开始，不愿透露健康细节"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望用这每天15分钟优先改善哪个方面，比如睡眠、精力、情绪还是日常节奏？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 221,
+            "completion_tokens": 30,
+            "total_tokens": 251,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 221
+          },
+          "seconds": 0.95,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "15分钟散步与规律作息起步计划",
+              "summary": "在每天15分钟内，以散步为固定锚点，带动作息逐步规律；不涉及健康细节，按自身感受随时调整。",
+              "steps": [
+                "第1周：每天固定同一时段散步15分钟，选一个最容易坚持的时间（如晚饭后），只求出现，不求强度。",
+                "散步结束后用1分钟记一句话：今天走了没、感觉如何，作为下周调整依据。",
+                "第2周：锁定起床时间，连续一周在同一时间起床（周末浮动不超过1小时）。",
+                "把散步安排在起床后或固定时段，让散步成为作息的时间锚点。",
+                "第3周：设一个固定的睡前准备闹钟，提醒自己在目标入睡时间前30分钟放下屏幕。",
+                "若当天无法散步，改为室内活动或拉伸15分钟，保持习惯不断档。",
+                "第4周：回顾前3周的记录，找出最容易中断的一天和原因，只针对那一点做一个小调整。",
+                "根据感受微调散步时段或入睡时间，保持每天总量不超过15分钟。",
+                "月末用5分钟总结：哪一环节最稳定、哪一环节最易断，决定下月继续保留哪两项。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 266,
+            "completion_tokens": 259,
+            "total_tokens": 525,
+            "prompt_tokens_details": {
+              "cached_tokens": 128
+            },
+            "prompt_cache_hit_tokens": 128,
+            "prompt_cache_miss_tokens": 138
+          },
+          "seconds": 3.23,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    }
+  ],
+  "finished_at": "2026-11-01T00:03:31.780288+08:00"
+}

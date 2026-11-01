@@ -1,0 +1,49 @@
+{
+  "results": [
+    {
+      "case": "F05",
+      "kind": "goal",
+      "status": "passed",
+      "questions": [],
+      "proposal": {
+        "title": "两周工作分享准备：每天5分钟精简计划",
+        "summary": "目标是在两周内完成一次工作分享的准备。每天可用时间只有5分钟，因此只安排最核心的准备动作，不设额外记录、复盘或打勾环节；若需要这些动作，需另行确认时间。分享的具体主题、听众和时长尚未确定，计划中只做内容梳理和要点沉淀，不预设成品时长。",
+        "steps": [
+          "第1-3天：用每天5分钟写下分享要解决的1个核心问题和一个最想传达的结论。",
+          "第4-7天：每天5分钟围绕核心结论补充1条支撑要点或例子，逐日累积。",
+          "第8-10天：每天5分钟把已积累要点按讲述顺序排一遍，删掉不必要内容。",
+          "第11-13天：每天5分钟口头过一遍要点，检查是否有讲不清的地方并记下要补的点。",
+          "第14天：用5分钟确认要点清单完整，作为分享前的最终版本。"
+        ],
+        "session_actions": [
+          {
+            "text": "写下分享的核心问题或当天要补充的1条支撑要点",
+            "kind": "core",
+            "minutes": 5
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 5,
+        "habit_completion_minutes": null
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": false,
+        "session_total_minutes": 5
+      }
+    }
+  ],
+  "status": "done",
+  "call_metrics": [
+    {
+      "reservation_id": "31f72234-8297-4743-8924-ae8e0b2fda6e",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2430,
+      "status": "response",
+      "prompt_tokens": 685,
+      "completion_tokens": 250,
+      "recorded_at": "2026-11-01T01:13:44.321556+08:00"
+    }
+  ]
+}

@@ -1,0 +1,1325 @@
+{
+  "started_at": "2026-11-01T00:27:38.762089+08:00",
+  "scope": "8 synthetic cases, non-thinking, up to three calls per case; no automatic retry",
+  "models": {
+    "qwen": {
+      "model": "qwen3.7-flash-2026-07-15",
+      "mode": "non-thinking",
+      "status": "done"
+    }
+  },
+  "cases": [
+    {
+      "model": "qwen",
+      "case": "E01",
+      "initial": {
+        "kind": "goal",
+        "goal": "一个月准备产品经理面试",
+        "background": "已有一年相关工作经验",
+        "availability": "每天20分钟",
+        "history": [
+          {
+            "question": "你希望优先准备哪一类产品面试？例如：1. 通用大厂综合面（侧重逻辑与案例） 2. 特定行业如电商/社交/AI 3. 初创公司全栈型角色",
+            "answer": "两周后有一次模拟面试"
+          },
+          {
+            "question": "为了在两周后的模拟面试中表现良好，你希望重点准备哪一类产品场景？1. 通用大厂综合面（侧重逻辑与案例） 2. 特定行业如电商/社交/AI 3. 初创公司全栈型角色",
+            "answer": "其他信息暂不确定，请基于已知信息给出可调整的建议。"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望优先准备哪一类产品面试？例如：1. 通用大厂综合面（侧重逻辑与案例） 2. 特定行业如电商/社交/AI 3. 初创公司全栈型角色",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 60,
+            "prompt_tokens": 562,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 562
+            },
+            "total_tokens": 622
+          },
+          "seconds": 1.24,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": "为了在两周后的模拟面试中表现良好，你希望重点准备哪一类产品场景？1. 通用大厂综合面（侧重逻辑与案例） 2. 特定行业如电商/社交/AI 3. 初创公司全栈型角色",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 68,
+            "prompt_tokens": 622,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 622
+            },
+            "total_tokens": 690
+          },
+          "seconds": 0.99,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "两周冲刺：模拟面试准备计划",
+              "summary": "基于你有一年工作经验，且目标是在两周内通过模拟面试，本计划聚焦于核心能力的快速构建。由于时间紧迫（每天20分钟），我们舍弃了广泛的行业研究，专注于通用逻辑框架和过往案例的梳理。假设你拥有基本的产品思维基础，步骤设计为低门槛、高回报的动作。若某些步骤耗时超过20分钟，请仅完成该步骤中最早的部分或标记为后续补充。",
+              "steps": [
+                "第1-3天：梳理一个最成功的过往项目，用STAR法则（情境、任务、行动、结果）在纸上写出关键数据和你做的三个核心决策，时长约15分钟/天。",
+                "第4-6天：学习并拆解一个经典的产品分析框架（如用户分层+需求优先级），尝试将其应用到你刚梳理的项目中，找出一个可优化的点，时长约15分钟/天。",
+                "第7-9天：针对模拟面试常见的“估算题”或“竞品分析题”，各练习一道真题，限时思考并在草稿纸上列出解题大纲，时长约15分钟/天。",
+                "第10-12天：整理一份个人优势清单（3个亮点）和一个待改进项，并预设面试官可能追问的角度，时长约15分钟/天。",
+                "第13-14天：进行全真模拟，对着镜子或录音设备完整讲述你的项目案例和产品分析思路，检查语速和逻辑连贯性，时长约20分钟/次。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 371,
+            "prompt_tokens": 700,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 700
+            },
+            "total_tokens": 1071
+          },
+          "seconds": 5.16,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "E02",
+      "initial": {
+        "kind": "goal",
+        "goal": "准备英语演讲",
+        "background": "",
+        "availability": "每天15分钟",
+        "history": [
+          {
+            "question": "您的演讲主题是什么？",
+            "answer": "一个月后演讲，基础一般"
+          },
+          {
+            "question": "您的演讲主题具体是什么？",
+            "answer": "其他信息暂不确定，请基于已知信息给出可调整的建议。"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "您的演讲主题是什么？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 19,
+            "prompt_tokens": 556,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 556
+            },
+            "total_tokens": 575
+          },
+          "seconds": 0.61,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": "您的演讲主题具体是什么？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 20,
+            "prompt_tokens": 576,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 576
+            },
+            "total_tokens": 596
+          },
+          "seconds": 0.58,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "一个月英语演讲基础准备计划",
+              "summary": "基于每天15分钟、一个月后截止、主题未定的约束，制定通用入门计划。假设您有基本的英语读写能力但口语不自信。取舍：因主题不确定，无法进行针对性内容创作，故聚焦于通用表达结构、脱稿记忆技巧和发音清晰度。建议后续确定主题后替换具体文本。",
+              "steps": [
+                "第1-3天：选定一个通用的简短自我介绍或观点陈述（约100词），用中文列出核心逻辑点，确保理解无误。",
+                "第4-6天：将核心逻辑点翻译为简单的英文句子，避免复杂从句，记录在卡片上，每天朗读并录音一次（15分钟）。",
+                "第7-9天：尝试不看文字，仅凭逻辑点提示复述内容，重点纠正明显的语法错误和卡顿处，重复练习直到流畅（15分钟）。",
+                "第10-12天：模拟演讲场景，站立对着镜子或手机摄像头练习，关注肢体语言和眼神交流，保持语速平稳（15分钟）。",
+                "第13-15天：增加情感投入，尝试加入适当的停顿和强调，录制完整视频回放，检查整体表现力（15分钟）。",
+                "第16-18天：针对回放中发现的问题（如口齿不清、节奏过快）进行专项微调，强化薄弱环节（15分钟）。",
+                "第19-21天：全真模拟，穿着正式服装，在固定地点完成两次完整演讲，测试抗压能力和稳定性（15分钟）。",
+                "第22-24天：放松心态，进行轻量级复习，重点回顾开场白和结尾句，确保首尾印象深刻（15分钟）。",
+                "第25-27天：最后整理讲稿笔记，精简至关键词提示卡，预演突发情况应对（如忘词时如何衔接）（15分钟）。",
+                "第28-30天：休息与心理建设，不再高强度练习，保持声音状态，想象成功演讲的场景以增强信心（15分钟）。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 496,
+            "prompt_tokens": 606,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 606
+            },
+            "total_tokens": 1102
+          },
+          "seconds": 6.46,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "E03",
+      "initial": {
+        "kind": "goal",
+        "goal": "两天内完成大型求职作品集",
+        "background": "",
+        "availability": "每天10分钟",
+        "history": [
+          {
+            "question": "请问您的作品集主要侧重于哪类职位或技能方向（例如：UI设计、前端开发、文案策划等）？",
+            "answer": "可以先完成一页简版作品介绍"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "请问您的作品集主要侧重于哪类职位或技能方向（例如：UI设计、前端开发、文案策划等）？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 39,
+            "prompt_tokens": 559,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 559
+            },
+            "total_tokens": 598
+          },
+          "seconds": 0.94,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "两天极简作品集冲刺计划",
+              "summary": "基于每天10分钟、总时长20分钟的严格限制，放弃完整作品集制作。取舍：仅聚焦单一核心项目，产出单页简版介绍（含标题、一句话简介、1-2张关键截图或代码片段、简短说明）。建议假设：使用现有设备（如手机/电脑）及免费工具（如备忘录、PPT或在线文档），无需额外学习成本。",
+              "steps": [
+                "第1天前5分钟：确定一个最拿得出手的项目，写下项目名称和一句核心亮点描述。",
+                "第1天后5分钟：收集该项目的1-2张最具代表性的成果图或关键代码片段。",
+                "第2天前5分钟：将名称、亮点和素材拼贴到一页文档中，添加30字以内的简短背景说明。",
+                "第2天后5分钟：通读检查错别语病，导出为PDF或截图保存，完成交付。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 231,
+            "prompt_tokens": 599,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 599
+            },
+            "total_tokens": 830
+          },
+          "seconds": 3.87,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "E04",
+      "initial": {
+        "kind": "goal",
+        "goal": "学习基础绘画",
+        "background": "零基础；原先说每周3小时，现更正为每周1小时",
+        "availability": "每周1小时",
+        "history": [
+          {
+            "question": "您目前手边有哪些绘画工具？（例如：铅笔、普通纸，或已有素描套装、数位板等），以便我为您匹配最合适的入门练习。",
+            "answer": "以更正后的每周1小时为准"
+          },
+          {
+            "question": "您目前手边有哪些绘画工具？（例如：铅笔、普通纸，或已有素描套装、数位板等），以便我为您匹配最合适的入门练习。",
+            "answer": "其他信息暂不确定，请基于已知信息给出可调整的建议。"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "您目前手边有哪些绘画工具？（例如：铅笔、普通纸，或已有素描套装、数位板等），以便我为您匹配最合适的入门练习。",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 50,
+            "prompt_tokens": 570,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 570
+            },
+            "total_tokens": 620
+          },
+          "seconds": 1.02,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": "您目前手边有哪些绘画工具？（例如：铅笔、普通纸，或已有素描套装、数位板等），以便我为您匹配最合适的入门练习。",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 48,
+            "prompt_tokens": 620,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 620
+            },
+            "total_tokens": 668
+          },
+          "seconds": 0.75,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "零基础绘画入门：每周1小时基础练习",
+              "summary": "基于每周1小时的可用时间，为您制定最小可行计划。假设您手头仅有普通纸张和书写用笔（如铅笔/圆珠笔），无需额外购买专业工具。此计划侧重于观察力训练和基本线条控制，不涉及复杂设备或特定软件。",
+              "steps": [
+                "准备阶段（5分钟）：找一张白纸和一支笔，确保光线充足，调整坐姿舒适。",
+                "直线与曲线练习（20分钟）：在纸上画不同长度的直线、波浪线和圆圈，重点感受手腕与手指的发力区别，不求完美，只求连贯。",
+                "简单物体轮廓描摹（25分钟）：选取一个日常小物件（如杯子、水果），不依赖照片，仅凭肉眼观察其大致形状，用轻线条勾勒出外轮廓，忽略细节。",
+                "复盘与记录（10分钟）：回顾刚才画的线条和轮廓，标记一处觉得控制得最好的地方和一处想改进的地方，作为下周的参考。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 245,
+            "prompt_tokens": 678,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 678
+            },
+            "total_tokens": 923
+          },
+          "seconds": 3.72,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "E05",
+      "initial": {
+        "kind": "habit",
+        "goal": "每天睡前读书",
+        "background": "",
+        "availability": "每天10分钟",
+        "history": [
+          {
+            "question": "请问您倾向于阅读纸质书还是使用电子设备（如手机、平板或电子阅读器）？",
+            "answer": "先尝试30天，每次读10分钟就算完成"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "请问您倾向于阅读纸质书还是使用电子设备（如手机、平板或电子阅读器）？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 33,
+            "prompt_tokens": 556,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 556
+            },
+            "total_tokens": 589
+          },
+          "seconds": 0.78,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "睡前10分钟阅读习惯计划",
+              "summary": "基于每天10分钟的可用时间，设定为每日睡前阅读。假设您已准备好书籍或电子设备（若未准备，建议优先选择最易获取的形式），每次完成即视为达标。此计划旨在建立轻松、无压力的睡前仪式感。",
+              "steps": [
+                "将阅读材料（纸质书或电子书应用）放置在床头伸手可及处，确保无需额外准备即可开始。",
+                "设定固定的睡前提醒（如刷牙后），立即进入阅读状态，专注阅读10分钟。",
+                "阅读结束后，无论进度如何，直接关灯睡觉，记录“已完成”以强化正向反馈。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 176,
+            "prompt_tokens": 597,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 597
+            },
+            "total_tokens": 773
+          },
+          "seconds": 2.89,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "E06",
+      "initial": {
+        "kind": "habit",
+        "goal": "每周运动三次",
+        "background": "",
+        "availability": "每次20分钟",
+        "history": [
+          {
+            "question": "请确认您希望每次20分钟的运动是连续进行，还是分为几个短时段完成？",
+            "answer": "计划持续4周，先从轻度活动开始"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "请确认您希望每次20分钟的运动是连续进行，还是分为几个短时段完成？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 28,
+            "prompt_tokens": 556,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 556
+            },
+            "total_tokens": 584
+          },
+          "seconds": 0.85,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "4周轻度运动入门计划",
+              "summary": "基于每周3次、每次20分钟的约束制定。因未指定具体设备，步骤采用无需器械的自重或日常物品替代方案（如椅子、水瓶）。起始阶段为轻度活动，旨在建立习惯而非追求强度。若中途感到不适或时间冲突，可随时调整后续频率，不强制全勤。",
+              "steps": [
+                "第1-2周：周一/三/五进行20分钟低强度活动，包含5分钟热身（原地踏步）、10分钟主运动（快走或慢速深蹲、靠墙静蹲交替）、5分钟拉伸放松。",
+                "第3-4周：保持周一/三/五20分钟节奏，尝试增加主运动时长至12分钟（如加入简易平板支撑或臀桥），热身与拉伸保持各5分钟。",
+                "记录每次完成后的身体感受（如轻松、微喘），以便后续调整强度。",
+                "准备一个计时器和舒适的运动鞋服，确保开始前的准备工作在5分钟内完成。",
+                "若某天无法完成20分钟，可拆分为两个10分钟时段，或顺延至次日补上，保持每周总次数为目标即可。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 281,
+            "prompt_tokens": 594,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 594
+            },
+            "total_tokens": 875
+          },
+          "seconds": 4.72,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "E07",
+      "initial": {
+        "kind": "habit",
+        "goal": "每晚复盘",
+        "background": "",
+        "availability": "周一、三、五各10分钟",
+        "history": [
+          {
+            "question": "您希望复盘的重点是记录当天完成的事项，还是反思情绪与决策？",
+            "answer": "持续两周，复盘记录一件做得好的事即可"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "您希望复盘的重点是记录当天完成的事项，还是反思情绪与决策？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 32,
+            "prompt_tokens": 560,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 560
+            },
+            "total_tokens": 592
+          },
+          "seconds": 1.08,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "周一三五微复盘计划",
+              "summary": "基于您提供的每周一、三、五各10分钟的时间窗口，以及“持续两周、仅记录一件做得好的事”的约束制定。此计划为最小可行步骤，旨在降低执行阻力。假设您在复盘时拥有纸笔或手机备忘录等基础记录工具。若中途感到疲惫，允许跳过单日，不视为失败。",
+              "steps": [
+                "在周一、三、五晚上固定时间（如睡前），预留5-10分钟安静时段",
+                "打开记录工具（笔记本或备忘录），写下今天发生的一件让你满意或觉得做得好的小事",
+                "简单标注日期，结束记录，不再扩展其他反思内容"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 172,
+            "prompt_tokens": 595,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 595
+            },
+            "total_tokens": 767
+          },
+          "seconds": 2.81,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "E08",
+      "initial": {
+        "kind": "goal",
+        "goal": "改善生活状态",
+        "background": "不愿提供健康细节",
+        "availability": "每天15分钟",
+        "history": [
+          {
+            "question": "为了在每天15分钟内有效改善生活状态，您更倾向于通过身体活动（如拉伸、散步）来调整精力，还是通过正念冥想或整理环境来放松身心？",
+            "answer": "想从散步和规律作息开始，不愿透露健康细节"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "为了在每天15分钟内有效改善生活状态，您更倾向于通过身体活动（如拉伸、散步）来调整精力，还是通过正念冥想或整理环境来放松身心？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 55,
+            "prompt_tokens": 561,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 561
+            },
+            "total_tokens": 616
+          },
+          "seconds": 1.03,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "每日15分钟活力重启计划",
+              "summary": "基于每天15分钟的可用时间，聚焦于散步与规律作息。因您不愿透露健康细节，本计划采用低强度、无器械的通用方案。取舍说明：无法进行高强度训练或深度睡眠干预，重点在于建立微小的行为惯性。步骤中“规律作息”指设定固定的起床/入睡时间点并执行，不计入15分钟活动时长，但作为整体目标的一部分。",
+              "steps": [
+                "在早晨或傍晚固定时段外出快走10-12分钟，保持能说话但不能唱歌的配速（约3-4公里/小时）。",
+                "使用手机闹钟或日历提醒，在预定时间上床准备休息，并在醒来时立即离开床铺以固化生物钟。",
+                "散步后花2分钟记录当日精力变化（如：轻松、疲惫），以便后续调整节奏。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 213,
+            "prompt_tokens": 621,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 621
+            },
+            "total_tokens": 834
+          },
+          "seconds": 3.47,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "H01",
+      "initial": {
+        "kind": "goal",
+        "goal": "准备一次10分钟的部门分享",
+        "background": "从未做过类似分享",
+        "availability": "两周内每周两次，每次20分钟",
+        "history": [
+          {
+            "question": "这次分享的核心目的是什么？（例如：同步项目进度、介绍新技术、还是分享个人经验？）",
+            "answer": "主题是介绍一个简单的工作经验"
+          },
+          {
+            "question": "这次分享是面向部门同事进行线下口头演示，还是通过文档/录屏进行线上异步分享？",
+            "answer": "其他信息暂不确定，请基于已知信息给出可调整的建议。"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "这次分享的核心目的是什么？（例如：同步项目进度、介绍新技术、还是分享个人经验？）",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 35,
+            "prompt_tokens": 569,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 569
+            },
+            "total_tokens": 604
+          },
+          "seconds": 0.83,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": "这次分享是面向部门同事进行线下口头演示，还是通过文档/录屏进行线上异步分享？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 36,
+            "prompt_tokens": 604,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 604
+            },
+            "total_tokens": 640
+          },
+          "seconds": 1.02,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "10分钟部门分享准备计划",
+              "summary": "基于已知约束：目标为介绍简单工作经验，时长10分钟。可用时间共4次（每次20分钟），总计80分钟。因具体形式（线上/线下）不确定，本计划采用通用型大纲梳理与草稿撰写方式，不依赖特定演示软件或录制设备。步骤包含选题聚焦、结构搭建、内容填充及模拟演练，所有素材均为个人经验整理，无需额外采购工具。",
+              "steps": [
+                "第1次（20分钟）：确定分享的具体经验主题，列出3个核心要点，并构思开场白和结尾语。",
+                "第2次（20分钟）：根据3个核心要点搭建PPT或文档大纲，确保每个要点有简短案例支持，控制总页数在10页以内。",
+                "第3次（20分钟）：完善具体内容，精简文字，补充关键数据或故事细节，形成完整的讲稿或提示卡。",
+                "第4次（20分钟）：进行1-2次计时自测演练，调整语速和内容节奏，确保不超过10分钟，并检查逻辑连贯性。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 275,
+            "prompt_tokens": 650,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 650
+            },
+            "total_tokens": 925
+          },
+          "seconds": 3.75,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "H02",
+      "initial": {
+        "kind": "habit",
+        "goal": "每周练琴两次",
+        "background": "曾经学过一点，阶段目标还没想清楚",
+        "availability": "每次15分钟",
+        "history": [
+          {
+            "question": "请问您练习的是哪种乐器（如钢琴、吉他等）？",
+            "answer": "先试三周，每次练满15分钟"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "请问您练习的是哪种乐器（如钢琴、吉他等）？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 30,
+            "prompt_tokens": 567,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 567
+            },
+            "total_tokens": 597
+          },
+          "seconds": 0.92,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "15分钟无乐器通用音乐习惯计划",
+              "summary": "基于每周2次、每次15分钟的约束制定。因未指定具体乐器，本计划提供无需特定硬件的通用音乐训练（节奏与听觉），可作为任何乐器的基础准备或独立习惯。若后续确定乐器，可替换对应练习步骤。",
+              "steps": [
+                "准备计时器，设定为15分钟倒计时",
+                "闭眼聆听一首熟悉的歌曲，用脚或手指在膝盖上打出稳定的节拍",
+                "尝试哼唱旋律，注意音准和呼吸节奏",
+                "记录本周感受：哪部分最轻松，哪部分最难"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 159,
+            "prompt_tokens": 601,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 601
+            },
+            "total_tokens": 760
+          },
+          "seconds": 2.66,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "H03",
+      "initial": {
+        "kind": "goal",
+        "goal": "今天做完整市场调研报告",
+        "background": "还没有任何素材",
+        "availability": "今天只剩10分钟",
+        "history": [
+          {
+            "question": "这份报告最核心需要验证的一个具体假设或问题是什么？",
+            "answer": "愿意先做一个问题清单"
+          },
+          {
+            "question": "这份报告最核心需要验证的一个具体假设或问题是什么？",
+            "answer": "其他信息暂不确定，请基于已知信息给出可调整的建议。"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "这份报告最核心需要验证的一个具体假设或问题是什么？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 29,
+            "prompt_tokens": 563,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 563
+            },
+            "total_tokens": 592
+          },
+          "seconds": 0.73,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": "这份报告最核心需要验证的一个具体假设或问题是什么？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 27,
+            "prompt_tokens": 590,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 590
+            },
+            "total_tokens": 617
+          },
+          "seconds": 0.61,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "10分钟市场调研报告框架搭建",
+              "summary": "已知条件：目标为完成调研报告，但无素材且仅剩10分钟。取舍：放弃深度数据收集，仅输出结构化大纲和待验证假设清单，作为后续工作的起点。建议假设：使用通用文档工具（如Word/笔记软件），无需特定专业设备。",
+              "steps": [
+                "明确核心问题：在文档标题处写下本次调研最想解决的一个具体商业或用户问题（2分钟）",
+                "列出关键假设：基于现有认知，列出3-5个需要验证的核心假设或疑问点（4分钟）",
+                "规划信息渠道：为每个假设标记1-2个最快捷的验证来源（如竞品官网、行业简报、用户评论），不执行搜索（3分钟）",
+                "设定下一步：记录一个明确的后续行动时间点，承诺在拥有更多时间时填充上述框架（1分钟）"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 216,
+            "prompt_tokens": 627,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 627
+            },
+            "total_tokens": 843
+          },
+          "seconds": 3.05,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "H04",
+      "initial": {
+        "kind": "habit",
+        "goal": "练习早起",
+        "background": "不愿透露健康或睡眠细节",
+        "availability": "每天最多5分钟",
+        "history": [
+          {
+            "question": "为了在5分钟内开始，您希望闹钟响起后立刻起床，还是先坐在床边静坐？",
+            "answer": "先从固定起床提醒开始，试两周"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "为了在5分钟内开始，您希望闹钟响起后立刻起床，还是先坐在床边静坐？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 35,
+            "prompt_tokens": 562,
+            "prompt_tokens_details": {
+              "cached_tokens": 256,
+              "text_tokens": 562
+            },
+            "total_tokens": 597
+          },
+          "seconds": 0.95,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "早起适应计划（两周版）",
+              "summary": "基于每天5分钟可用时间，设定为期14天的固定起床提醒习惯。因用户未透露健康细节，不推荐剧烈运动或复杂流程，仅保留最基础的清醒动作。若中途感到不适可随时暂停。",
+              "steps": [
+                "确定一个固定的起床时间点，并设置闹钟",
+                "闹钟响后，花30秒在原地深呼吸调整状态",
+                "随后花2分30秒进行简单的肢体伸展（如伸懒腰、转动脚踝）",
+                "最后花2分钟整理床铺或喝一口温水，完成晨间启动"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 169,
+            "prompt_tokens": 600,
+            "prompt_tokens_details": {
+              "cached_tokens": 256,
+              "text_tokens": 600
+            },
+            "total_tokens": 769
+          },
+          "seconds": 2.55,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "H05",
+      "initial": {
+        "kind": "goal",
+        "goal": "一周内完成摄影入门",
+        "background": "刚开始没有经验，原来每周两小时，后来改为每周半小时",
+        "availability": "总共30分钟",
+        "history": [
+          {
+            "question": "您手头目前有哪些可用的摄影设备？（例如：智能手机、单反/微单相机、或暂无专业设备仅用手机）",
+            "answer": "以更正后的半小时为准"
+          },
+          {
+            "question": "请问您目前手头可用的摄影设备是智能手机、单反/微单相机，还是暂无专业设备仅用手机？",
+            "answer": "其他信息暂不确定，请基于已知信息给出可调整的建议。"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "您手头目前有哪些可用的摄影设备？（例如：智能手机、单反/微单相机、或暂无专业设备仅用手机）",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 42,
+            "prompt_tokens": 572,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 572
+            },
+            "total_tokens": 614
+          },
+          "seconds": 0.86,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": "请问您目前手头可用的摄影设备是智能手机、单反/微单相机，还是暂无专业设备仅用手机？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 37,
+            "prompt_tokens": 612,
+            "prompt_tokens_details": {
+              "cached_tokens": 256,
+              "text_tokens": 612
+            },
+            "total_tokens": 649
+          },
+          "seconds": 0.86,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "30分钟摄影入门微计划",
+              "summary": "基于每周仅30分钟的约束，本计划舍弃系统理论学习，聚焦于单次拍摄中可立即执行的一个核心动作。假设使用智能手机作为主要工具（因用户未提供其他设备信息且手机最易获取），若使用相机请自行替换对应操作界面。此计划为最小可行尝试，旨在建立手感而非完成全面掌握。",
+              "steps": [
+                "准备阶段（2分钟）：清理镜头表面灰尘，确保电量充足，打开相机App并切换至专业模式或手动对焦模式（若支持）。",
+                "观察与构图（8分钟）：寻找一个静止物体，练习三分法构图，将主体放置在画面交叉点上，保持双手稳定。",
+                "拍摄与调整（15分钟）：连续拍摄5-10张不同角度或曝光的照片，重点体验点击屏幕对焦和滑动调整亮度的反馈，不追求完美出片。",
+                "复盘与保存（5分钟）：挑选其中一张最满意的照片进行简单裁剪或滤镜处理，保存到相册，记录本次拍摄时的光线条件。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 255,
+            "prompt_tokens": 659,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 659
+            },
+            "total_tokens": 914
+          },
+          "seconds": 3.99,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "H06",
+      "initial": {
+        "kind": "goal",
+        "goal": "一周内学会简单的视频剪辑",
+        "background": "只有手机，没安装任何软件",
+        "availability": "这周总共20分钟",
+        "history": [
+          {
+            "question": "为了在20分钟内完成一次简单的视频剪辑，您希望使用手机自带相册的编辑功能，还是愿意花1分钟下载一个应用（如剪映或InShot）？",
+            "answer": "愿意先试剪一个10秒短片"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "为了在20分钟内完成一次简单的视频剪辑，您希望使用手机自带相册的编辑功能，还是愿意花1分钟下载一个应用（如剪映或InShot）？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 54,
+            "prompt_tokens": 569,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 569
+            },
+            "total_tokens": 623
+          },
+          "seconds": 1.16,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "20分钟手机短视频剪辑计划",
+              "summary": "基于您愿意使用剪映/InShot且总时长20分钟的约束，本计划包含1分钟下载应用时间。假设您的手机已连接网络。若中途卡顿，可跳过复杂功能，仅完成基础裁剪。",
+              "steps": [
+                "花费约1分钟在应用商店搜索并安装剪映或InShot（建议）。",
+                "花费约5分钟打开软件，导入一段现有的手机视频素材（10-15秒为宜）。",
+                "花费约8分钟使用“分割”和“删除”工具，剪掉多余部分，保留最精彩的3-5秒核心片段。",
+                "花费约4分钟添加一个简短的标题文字和一个简单的转场效果。",
+                "花费约2分钟预览视频，如有明显错误则微调，无误后点击导出保存至相册。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 209,
+            "prompt_tokens": 625,
+            "prompt_tokens_details": {
+              "cached_tokens": 256,
+              "text_tokens": 625
+            },
+            "total_tokens": 834
+          },
+          "seconds": 3.23,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "H07",
+      "initial": {
+        "kind": "habit",
+        "goal": "每周练习乐器三次",
+        "background": "不知道具体要练什么内容",
+        "availability": "每次10分钟",
+        "history": [
+          {
+            "question": "请问您练习的是哪种乐器？",
+            "answer": "先试两周，练满10分钟算完成"
+          },
+          {
+            "question": "请问您目前拥有哪种乐器？",
+            "answer": "其他信息暂不确定，请基于已知信息给出可调整的建议。"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "请问您练习的是哪种乐器？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 16,
+            "prompt_tokens": 564,
+            "prompt_tokens_details": {
+              "cached_tokens": 256,
+              "text_tokens": 564
+            },
+            "total_tokens": 580
+          },
+          "seconds": 0.66,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": "请问您目前拥有哪种乐器？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 21,
+            "prompt_tokens": 591,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 591
+            },
+            "total_tokens": 612
+          },
+          "seconds": 0.65,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "通用乐器基础入门计划",
+              "summary": "基于每周3次、每次10分钟的约束。因用户不确定具体乐器，本计划提供适用于多数乐器的通用基础练习（如呼吸/持械姿势、空弦/单音、简单节奏）。标注为建议的通用动作，用户需根据实际拥有的乐器自行替换具体操作。若中断不指责，可随时调整。",
+              "steps": [
+                "准备阶段：整理乐器及配件，确保环境安静舒适，耗时约2分钟",
+                "热身与姿势检查：调整坐姿或站姿，放松肩颈，检查乐器握持或吹奏姿势，耗时约2分钟",
+                "核心练习：进行单音发声、长音保持或极简单的重复指法/节奏练习，专注于声音稳定或动作流畅，耗时约5分钟",
+                "复盘与收纳：记录今日感受（如“轻松”或“吃力”），清洁并收纳乐器，耗时约1分钟"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 235,
+            "prompt_tokens": 622,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 622
+            },
+            "total_tokens": 857
+          },
+          "seconds": 3.13,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "H08",
+      "initial": {
+        "kind": "goal",
+        "goal": "三天内准备一场完整的公开分享",
+        "background": "没有任何材料",
+        "availability": "每天只有5分钟",
+        "history": [
+          {
+            "question": "请问这次公开分享的具体主题是什么？",
+            "answer": "愿意先整理三条分享提纲"
+          },
+          {
+            "question": "请问这次公开分享的具体主题是什么？",
+            "answer": "其他信息暂不确定，请基于已知信息给出可调整的建议。"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "请问这次公开分享的具体主题是什么？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 17,
+            "prompt_tokens": 563,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 563
+            },
+            "total_tokens": 580
+          },
+          "seconds": 0.58,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": "请问这次公开分享的具体主题是什么？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 22,
+            "prompt_tokens": 586,
+            "prompt_tokens_details": {
+              "cached_tokens": 256,
+              "text_tokens": 586
+            },
+            "total_tokens": 608
+          },
+          "seconds": 0.7,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "3天极简分享准备计划",
+              "summary": "在每天5分钟、无现成材料且主题暂定的约束下，本计划聚焦于构建核心逻辑框架而非制作精美课件。取舍：放弃视觉美化与长篇稿子，仅输出口头讲述的骨架。建议假设：使用手机备忘录或白板作为唯一工具；分享内容基于用户最熟悉的领域。",
+              "steps": [
+                "第1天（5分钟）：确定一个具体切入点，在备忘录写下“听众是谁”和“我想让他们带走的一个核心观点”。",
+                "第2天（5分钟）：围绕核心观点，列出支撑它的三个简短理由或故事要点，形成提纲骨架。",
+                "第3天（5分钟）：对着镜子或录音，用口语复述上述三点提纲，不追求完美，只确保逻辑连贯。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 199,
+            "prompt_tokens": 618,
+            "prompt_tokens_details": {
+              "cached_tokens": 256,
+              "text_tokens": 618
+            },
+            "total_tokens": 817
+          },
+          "seconds": 2.91,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "H09",
+      "initial": {
+        "kind": "habit",
+        "goal": "每天记录心情",
+        "background": "不愿透露心理健康细节",
+        "availability": "每天3分钟",
+        "history": [
+          {
+            "question": "您希望使用哪种工具记录心情？例如：手机备忘录、纸质笔记本或特定习惯类App？",
+            "answer": "可以先试七天，每次写一句话"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "您希望使用哪种工具记录心情？例如：手机备忘录、纸质笔记本或特定习惯类App？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 35,
+            "prompt_tokens": 560,
+            "prompt_tokens_details": {
+              "cached_tokens": 256,
+              "text_tokens": 560
+            },
+            "total_tokens": 595
+          },
+          "seconds": 0.95,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "七日心情一句话记录计划",
+              "summary": "基于每天3分钟的可用时间，采用极简记录法。工具暂定为手机备忘录或任意纸笔（建议确认）。规则为每次仅写一句描述当前心情的话，不分析原因，不追求篇幅，旨在建立低门槛的每日觉察习惯。",
+              "steps": [
+                "准备一个固定的记录入口（如手机备忘录置顶或随身小本子）",
+                "设定每天固定触发点（如刷牙后或睡前），预留3分钟",
+                "在入口处用一句话写下此刻最突出的情绪关键词或感受",
+                "记录完成后立即关闭或合上，不做额外复盘"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 170,
+            "prompt_tokens": 597,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 597
+            },
+            "total_tokens": 767
+          },
+          "seconds": 2.62,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "qwen",
+      "case": "H10",
+      "initial": {
+        "kind": "goal",
+        "goal": "准备一次英语自我介绍",
+        "background": "之前说每天30分钟，现更正为每天5分钟",
+        "availability": "持续两周，每天5分钟",
+        "history": [
+          {
+            "question": "请问这次自我介绍的主要场合是什么（例如：面试、课堂展示、社交聚会），以便我为您定制最合适的重点内容？",
+            "answer": "计划中所有准备和复盘都要计入5分钟"
+          },
+          {
+            "question": "请提供您希望自我介绍中包含的核心信息点（如姓名、职业、爱好等），以便我为您规划这5分钟的具体内容分配。",
+            "answer": "其他信息暂不确定，请基于已知信息给出可调整的建议。"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "请问这次自我介绍的主要场合是什么（例如：面试、课堂展示、社交聚会），以便我为您定制最合适的重点内容？",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 40,
+            "prompt_tokens": 573,
+            "prompt_tokens_details": {
+              "cached_tokens": 256,
+              "text_tokens": 573
+            },
+            "total_tokens": 613
+          },
+          "seconds": 0.94,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": "请提供您希望自我介绍中包含的核心信息点（如姓名、职业、爱好等），以便我为您规划这5分钟的具体内容分配。",
+            "plan": null
+          },
+          "usage": {
+            "completion_tokens": 43,
+            "prompt_tokens": 618,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 618
+            },
+            "total_tokens": 661
+          },
+          "seconds": 0.95,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "5分钟/天英语自我介绍两周计划",
+              "summary": "基于每天5分钟、持续两周（共70分钟）的约束。因核心信息点未定，计划采用通用模板结构（姓名-职业/身份-兴趣-目标）。步骤包含撰写、朗读录音和复盘，所有时间计入5分钟内。建议假设使用手机录音功能，若需特定设备请确认。",
+              "steps": [
+                "第1-3天：在纸上写出包含姓名、当前角色/职业、一个爱好及期望结果的简短英文草稿（约30秒阅读时间），确保句子简单可记。",
+                "第4-6天：大声朗读草稿并录音，对比听写检查发音和流畅度，标记卡顿处，每次限时5分钟。",
+                "第7-9天：针对卡顿处进行分段练习，尝试脱稿重复完整段落，保持语速平稳，每次限时5分钟。",
+                "第10-12天：模拟真实场景（如站立、微笑）进行完整演练，录制最终版本音频，评估整体时长是否控制在1-2分钟内。",
+                "第13-14天：回顾录音，微调不自然的表达或词汇，形成最终版自我介绍文本，作为可编辑成果保存。"
+              ]
+            }
+          },
+          "usage": {
+            "completion_tokens": 290,
+            "prompt_tokens": 671,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "text_tokens": 671
+            },
+            "total_tokens": 961
+          },
+          "seconds": 4.48,
+          "returned_model": "qwen3.7-flash-2026-07-15"
+        }
+      ],
+      "status": "plan"
+    }
+  ],
+  "finished_at": "2026-11-01T00:29:07.686206+08:00"
+}

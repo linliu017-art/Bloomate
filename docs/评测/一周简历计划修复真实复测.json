@@ -1,0 +1,115 @@
+{
+  "results": [
+    {
+      "case": "W01",
+      "kind": "goal",
+      "status": "passed",
+      "questions": [],
+      "proposal": {
+        "title": "一周完成简历制作（每天一小时）",
+        "summary": "利用每天约一小时，用7天从梳理素材到完成一版可投递简历。计划默认目标是生成完整简历文本或文档；若你已有现成模板或过往简历，可据此调整篇幅。每天的任务按一天一小时的可用时间安排，只做当天列出的工作，不额外占用其他时间。",
+        "steps": [
+          "第1天：明确求职方向与简历用途，列出目标岗位、需要突出的3—5项核心能力，并定下简历篇幅与版式方向（控制在一页）。",
+          "第2天：盘点个人素材，整理教育、工作/项目、技能、证书等经历要点，每段先写事实与成果，不追求措辞。",
+          "第3天：筛选与目标岗位最相关的经历，删去无关内容，为每段经历提炼1—2条可量化的成果或职责要点。",
+          "第4天：撰写简历初稿，按个人信息、求职意向、教育/经历、项目/技能的顺序成文，确保结构完整、重点前置。",
+          "第5天：精简与润色初稿，统一时态和格式，检查关键词与目标岗位的匹配度，删除重复和空泛表述。",
+          "第6天：制作正式版文档，检查排版、字体、页边距和导出格式，确保一页内可读、无错别字。",
+          "第7天：通读校对并做最终确认，保存可投递版本，记录后续可补充或调整的地方，完成一版可投简历。"
+        ],
+        "session_actions": [
+          {
+            "text": "写下目标岗位与3—5项核心能力，确定一页篇幅和版式方向",
+            "kind": "core",
+            "minutes": 30
+          },
+          {
+            "text": "列出简历需要覆盖的模块与素材清单，标注待补充的信息",
+            "kind": "core",
+            "minutes": 20
+          },
+          {
+            "text": "确定正式版文档的工具与文件命名方式，为后续整理做准备",
+            "kind": "other",
+            "minutes": 10
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": null,
+        "habit_completion_minutes": null
+      },
+      "check": {
+        "budget_checked": false,
+        "completion_checked": false,
+        "session_total_minutes": 60
+      }
+    },
+    {
+      "case": "W02",
+      "kind": "goal",
+      "status": "passed",
+      "questions": [],
+      "proposal": {
+        "title": "一周完成简历制作计划",
+        "summary": "用每天60分钟，从梳理素材到定稿一版可投递的简历。第1天先整理经历与岗位信息，后续逐日推进内容与排版，最后留出检查与定制时间。未指定目标岗位和现有素材情况，部分内容需你在执行时自行补充。",
+        "steps": [
+          "第1天：明确目标岗位与投递方向，列出简历需覆盖的关键词；梳理教育、工作/项目经历的基本框架（60分钟）。",
+          "第2天：细化核心经历，写清每段经历的职责、行动与可量化结果，形成要点草稿（60分钟）。",
+          "第3天：补充技能、证书、自我评价等模块，筛选与目标岗位最相关的内容（60分钟）。",
+          "第4天：选择简洁模板，将内容填入并完成初步排版，控制篇幅在一至两页（60分钟）。",
+          "第5天：通读全文，检查逻辑、动词使用和数据表达，删减冗余内容（60分钟）。",
+          "第6天：校对错别字、标点、日期与联系方式，检查格式一致性，请他人快速过目并记录反馈（60分钟）。",
+          "第7天：根据反馈做最后修改，导出PDF并确认文件命名与投递版本，完成定稿（60分钟）。"
+        ],
+        "session_actions": [
+          {
+            "text": "列出目标岗位与招聘要求中的3至5个关键词",
+            "kind": "core",
+            "minutes": 15
+          },
+          {
+            "text": "按教育、工作/实习、项目分块，写出每段经历的起止时间和核心职责",
+            "kind": "core",
+            "minutes": 35
+          },
+          {
+            "text": "标记素材缺口，确定后续几天需要补充的信息",
+            "kind": "core",
+            "minutes": 10
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 60,
+        "habit_completion_minutes": null
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": false,
+        "session_total_minutes": 60
+      }
+    }
+  ],
+  "status": "done",
+  "call_metrics": [
+    {
+      "reservation_id": "4b8de8d1-e344-4498-b59e-47da17d176fc",
+      "model": "deepseek-flash",
+      "elapsed_ms": 3670,
+      "status": "response",
+      "prompt_tokens": 867,
+      "completion_tokens": 424,
+      "recorded_at": "2026-11-01T09:38:22.856130+08:00"
+    },
+    {
+      "reservation_id": "61e0c416-00e6-46fd-a81b-514ef79c1e9f",
+      "model": "deepseek-flash",
+      "elapsed_ms": 3298,
+      "status": "response",
+      "prompt_tokens": 869,
+      "completion_tokens": 369,
+      "recorded_at": "2026-11-01T09:38:26.179877+08:00"
+    }
+  ]
+}

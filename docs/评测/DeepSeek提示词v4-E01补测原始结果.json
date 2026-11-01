@@ -1,0 +1,84 @@
+{
+  "started_at": "2026-11-01T00:36:55.920372+08:00",
+  "scope": "8 synthetic cases, non-thinking, up to three calls per case; no automatic retry",
+  "models": {
+    "deepseek": {
+      "model": "deepseek-flash",
+      "mode": "non-thinking",
+      "status": "done"
+    }
+  },
+  "cases": [
+    {
+      "model": "deepseek",
+      "case": "E01",
+      "initial": {
+        "kind": "goal",
+        "goal": "一个月准备产品经理面试",
+        "background": "已有一年相关工作经验",
+        "availability": "每天20分钟",
+        "history": [
+          {
+            "question": "你目前最想先准备哪一项：简历与项目讲述、产品案例练习、行业与公司研究，还是模拟面试？",
+            "answer": "两周后有一次模拟面试"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你目前最想先准备哪一项：简历与项目讲述、产品案例练习、行业与公司研究，还是模拟面试？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 427,
+            "completion_tokens": 35,
+            "total_tokens": 462,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 171
+          },
+          "seconds": 0.98,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "一个月产品经理面试准备·20分钟/日",
+              "summary": "目标：一个月内为产品经理面试做准备，两周后参加一次模拟面试。已知：每天20分钟、约一年相关经验。假设（待确认）：每天20分钟为净准备时间；两周内模拟面试形式未知。取舍：总量有限，优先简历与项目讲述及模拟面试前的基础表达，行业与公司研究用碎片时间小步推进；不承诺覆盖全部面试题型。",
+              "steps": [
+                "第1天（20分钟）：列出3个可讲项目要点，每个写下背景、你的动作、结果各一句，形成可编辑草稿。",
+                "第2–5天（每天20分钟）：每天选择一个项目，口头讲述2分钟并微调一句话，累积项目讲述稿。",
+                "第6–7天（每天20分钟）：整理产品案例的基础框架（问题—用户—方案—取舍—结果），选一个日常熟悉的产品试填。",
+                "第8–10天（每天20分钟）：用框架分析一个产品案例，并压缩成3分钟口述版本。",
+                "第11天（20分钟）：核对模拟面试的时间、形式和主题（待确认），据此标出最需优先练的部分。",
+                "第12–13天（每天20分钟）：围绕模拟面试做2次完整口述演练，记录卡壳处并修正。",
+                "第14天（20分钟）：进行模拟面试（如时间有变，待确认后顺延）；结束后用10分钟记下反馈。",
+                "第15–21天（每天20分钟）：按反馈每周轮换练习——项目讲述、案例、行业公司基础信息各占部分时间。",
+                "第22–27天（每天20分钟）：做2次简化自测式问答，每次15分钟，余时整理答案卡片。",
+                "第28–30天（每天20分钟）：整理面试问题清单与项目底稿，做最终复习；如时间不足，优先项目讲述和已练案例。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 470,
+            "completion_tokens": 448,
+            "total_tokens": 918,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 214
+          },
+          "seconds": 4.05,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    }
+  ],
+  "finished_at": "2026-11-01T00:37:00.956863+08:00"
+}

@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "before": {
+    "end_date": "2026-11-15",
+    "weekdays": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
+  },
+  "after": {
+    "end_date": "2026-11-11",
+    "weekdays": [
+      0,
+      2,
+      4
+    ],
+    "effective_date": "2026-11-02",
+    "future_count": 5
+  },
+  "checks": "历史打卡保留，暂停日拒绝新增，恢复不延长周期"
+}

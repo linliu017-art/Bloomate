@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "pause_preview": {
+    "end_date": "2026-11-11",
+    "future_days": 10,
+    "threshold": 3,
+    "completed": 1
+  },
+  "adjustment_preview": {
+    "end_date": "2026-11-11",
+    "weekdays": [
+      0,
+      2,
+      4
+    ],
+    "effective_date": "2026-11-02",
+    "future_count": 5,
+    "threshold": 3,
+    "completed": 1
+  }
+}

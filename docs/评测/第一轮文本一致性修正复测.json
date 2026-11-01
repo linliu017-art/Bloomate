@@ -1,0 +1,50 @@
+{
+  "results": [
+    {
+      "case": "F05",
+      "kind": "goal",
+      "status": "passed",
+      "questions": [],
+      "proposal": {
+        "title": "两周工作分享：每天5分钟准备计划",
+        "summary": "总共两周（14天），每天预算5分钟。计划把准备拆成可独立完成的小动作：先确定分享主题和一个核心要点，再逐日补充两到三个要点并写下简单提纲，最后用两到三天串联并做口头过一遍。由于单次仅5分钟，所有动作都集中在核心内容准备上，不另行安排记录、复盘或额外整理；若需要这些环节，需先确认额外时间。分享成品时长和听众规模尚未确定，计划只保证内容逐步成型，具体时长与场景留待你确认。",
+        "steps": [
+          "第1天：用5分钟确定分享主题，并写下你最想传达的一个核心要点。",
+          "第2至4天：每天5分钟补充一个支撑要点（例子、数据或做法），共形成三个左右要点。",
+          "第5至7天：每天5分钟为每个要点补一句说明或例子，使内容可讲清楚。",
+          "第8至10天：每天5分钟把主题和要点串成简单顺序，形成可照着讲的口头提纲。",
+          "第11至12天：每天5分钟口头试讲一部分，检查是否顺畅。",
+          "第13至14天：每天5分钟完整过一遍，并记下需调整的地方。"
+        ],
+        "session_actions": [
+          {
+            "text": "确定分享主题，并写下一个核心要点",
+            "kind": "core",
+            "minutes": 5
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 5,
+        "habit_completion_minutes": null
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": false,
+        "session_total_minutes": 5
+      }
+    }
+  ],
+  "status": "done",
+  "call_metrics": [
+    {
+      "reservation_id": "5f655090-6de7-4e4c-afdc-a04c11401f0f",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2646,
+      "status": "response",
+      "prompt_tokens": 733,
+      "completion_tokens": 308,
+      "recorded_at": "2026-11-01T01:14:51.722974+08:00"
+    }
+  ]
+}

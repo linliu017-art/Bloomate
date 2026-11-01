@@ -1,0 +1,49 @@
+{
+  "results": [
+    {
+      "case": "F05",
+      "kind": "goal",
+      "status": "passed",
+      "questions": [],
+      "proposal": {
+        "title": "两周工作分享准备：每天5分钟最小行动",
+        "summary": "你每天可用5分钟，单次安排不超过5分钟，全部用于推进分享准备。核心动作是把分享内容拆成小份并持续补充；不额外安排记录、整理或复盘，除非你先确认增加时间。两周后能否完整呈现，取决于分享时长和内容要求，这些可在开始后按需要再确认。",
+        "steps": [
+          "第1天：用5分钟明确分享的主题一句话和听众是谁。",
+          "第2至5天：每天5分钟，想或写出一个要讲的关键点，累计到4个。",
+          "第6至9天：每天5分钟，为每个关键点补充一个例子或数据线索。",
+          "第10至12天：每天5分钟，按顺序串一遍要点，口头试讲一小段。",
+          "第13至14天：每天5分钟，完整口头过一遍，只记下需要改的一处，下次直接改。"
+        ],
+        "session_actions": [
+          {
+            "text": "推进分享准备：按当天阶段想或讲出一小段内容",
+            "kind": "core",
+            "minutes": 5
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 5,
+        "habit_completion_minutes": null
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": false,
+        "session_total_minutes": 5
+      }
+    }
+  ],
+  "status": "done",
+  "call_metrics": [
+    {
+      "reservation_id": "9c1f8ba0-fd06-44ba-b4b2-8e22a51ed492",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2226,
+      "status": "response",
+      "prompt_tokens": 733,
+      "completion_tokens": 240,
+      "recorded_at": "2026-11-01T09:29:17.005908+08:00"
+    }
+  ]
+}

@@ -1,0 +1,258 @@
+{
+  "results": [
+    {
+      "case": "F01",
+      "kind": "goal",
+      "status": "passed",
+      "questions": [
+        "一个月后这次三分钟英文读书分享，你希望达到的最低完成标准是什么（比如能完整说完不停顿、能脱稿、能回答一个提问）？"
+      ],
+      "proposal": {
+        "title": "一个月三分钟英文读书分享最小可修改方案",
+        "summary": "按每天15分钟安排，不编造具体书目或英语水平。先用每天15分钟完成最短的核心练习：选一本你喜欢的书，写出一段三分钟英文分享提纲，并逐日练习到能基本连续说完。第一周确定书和分享结构，后三周反复练习和微调。正式分享的最低完成标准未确定，可先按“能完整说完三分钟、不停顿太久”作为可修改目标，之后由你确认。",
+        "steps": [
+          "第1周：从喜欢的书中选一本，确定分享的3个部分：书名和作者、为什么喜欢、一个推荐理由或片段。",
+          "第2周：写出三分钟英文分享稿，按每天15分钟分段练习开头和中段。",
+          "第3周：每天完整练习一遍，标记卡顿处，第二天优先练这些句子。",
+          "第4周：按三分钟计时练习，至少完成一次完整脱稿或半脱稿分享，并记录能否在时限内说完。"
+        ],
+        "session_actions": [
+          {
+            "text": "用英文写出或补充分享稿的一小段，并朗读练习一遍",
+            "kind": "core",
+            "minutes": 15
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 15,
+        "habit_completion_minutes": null
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": false,
+        "session_total_minutes": 15
+      }
+    },
+    {
+      "case": "F02",
+      "kind": "goal",
+      "status": "passed",
+      "questions": [
+        "两天内你希望作品集达到什么可验收的最低标准（例如：一页提纲含目标岗位、3个素材方向、下一步清单）？"
+      ],
+      "proposal": {
+        "title": "两天求职作品集最小启动计划",
+        "summary": "每天只有10分钟，两天共20分钟。因为还没有整理现成素材，目标先不求完整作品集，只做一页可修改的最小提纲，至少写清目标岗位方向和下一步素材整理清单。无法在两天内完成筛选素材、排版成型或完整作品集；如果你需要这些，请另约时间。",
+        "steps": [
+          "第1天：用10分钟写一页提纲，列出目标岗位方向（不确定可先写“待确认”）和3个可能素材方向。",
+          "第2天：用10分钟在提纲上补一份下一步素材整理清单，标出每类素材还缺什么；其余整理留到以后，时间另算。"
+        ],
+        "session_actions": [
+          {
+            "text": "打开一页文档，写下暂定目标岗位和3个素材方向，不整理素材文件",
+            "kind": "core",
+            "minutes": 10
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 10,
+        "habit_completion_minutes": null
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": false,
+        "session_total_minutes": 10
+      }
+    },
+    {
+      "case": "F03",
+      "kind": "habit",
+      "status": "passed",
+      "questions": [],
+      "proposal": {
+        "title": "睡前阅读30天（每次10分钟）",
+        "summary": "每天睡前安排10分钟专注阅读，读满10分钟即记为当天完成。由于单次预算正好等于完成标准，单次安排只包含阅读这一项核心行动；打卡、选书、回顾等若要做，需要你另行确认额外时间，不占用本次10分钟。",
+        "steps": [
+          "第1周：固定在睡前开始，连续7天每次阅读10分钟，读满即结束。",
+          "第2周：保持同样的睡前时段和10分钟时长，继续每天一次。",
+          "第3周：延续前两周节奏，仍然只以读满10分钟为完成标准。",
+          "第4周：完成最后7天，凑满30天，不追加额外任务。"
+        ],
+        "session_actions": [
+          {
+            "text": "睡前专注阅读10分钟，读满10分钟即记为当天完成",
+            "kind": "core",
+            "minutes": 10
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 10,
+        "habit_completion_minutes": 10
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": true,
+        "session_total_minutes": 10
+      }
+    },
+    {
+      "case": "F04",
+      "kind": "habit",
+      "status": "passed",
+      "questions": [],
+      "proposal": {
+        "title": "每周三次轻度运动四周计划",
+        "summary": "按每周三次、每次20分钟内安排轻度运动。核心轻度运动15分钟，作为完成标准；剩下约5分钟用于简单准备与收尾。计划持续四周，适合你当前每次20分钟的可用时间，不额外占用其他时段。可先按此执行，如有不适或时间变动再调整。",
+        "steps": [
+          "第1周：先确定每周三次的运动日，按单次安排完成轻度运动。",
+          "第2周：保持每周三次，动作强度以能正常交谈为宜。",
+          "第3周：延续同一频率，若身体适应可保持或微调动作。",
+          "第4周：完成最后三次运动，复盘四周执行情况。"
+        ],
+        "session_actions": [
+          {
+            "text": "进行15分钟轻度运动（如慢走、拉伸或低强度活动），按完成标准计时",
+            "kind": "core",
+            "minutes": 15
+          },
+          {
+            "text": "用约5分钟做开始前准备和结束后简单放松收尾",
+            "kind": "other",
+            "minutes": 5
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 20,
+        "habit_completion_minutes": 15
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": true,
+        "session_total_minutes": 20
+      }
+    },
+    {
+      "case": "F05",
+      "kind": "goal",
+      "status": "passed",
+      "questions": [
+        "这两周准备分享时，你希望把每天5分钟的核心产出定为什么（例如：确定主题并列出大纲、收集素材、写出讲稿草稿、完成试讲）？"
+      ],
+      "proposal": {
+        "title": "两周工作分享最小准备计划（每天5分钟）",
+        "summary": "按每天5分钟、共两周安排，把准备拆成可在单次5分钟内完成的小动作。主题、素材和讲稿都从零开始累积；具体分享主题与形式尚不确定，计划可按你的实际情况修改。",
+        "steps": [
+          "第1-3天：确定分享主题与核心信息，写下标题和一句话目标。",
+          "第4-7天：围绕主题收集并筛选少量必要素材，形成要点清单。",
+          "第8-10天：把要点整理成讲稿提纲，补上开场和结尾。",
+          "第11-12天：按提纲口头练习，每次只练一个片段。",
+          "第13-14天：结合练习结果微调内容，并确认分享所需的基本形式。"
+        ],
+        "session_actions": [
+          {
+            "text": "写下分享标题、一句话目标和一个核心要点",
+            "kind": "core",
+            "minutes": 5
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 5,
+        "habit_completion_minutes": null
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": false,
+        "session_total_minutes": 5
+      }
+    }
+  ],
+  "status": "done",
+  "call_metrics": [
+    {
+      "reservation_id": "6e198118-2203-4e82-a722-2209dca0a453",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1438,
+      "status": "response",
+      "prompt_tokens": 546,
+      "completion_tokens": 42,
+      "recorded_at": "2026-11-01T01:00:44.302491+08:00"
+    },
+    {
+      "reservation_id": "9e4e7336-1265-4137-a2e1-43214b84b144",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2863,
+      "status": "response",
+      "prompt_tokens": 610,
+      "completion_tokens": 262,
+      "recorded_at": "2026-11-01T01:00:47.178360+08:00"
+    },
+    {
+      "reservation_id": "10d7ac1d-020e-4a29-8e25-45584db3c3e0",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2134,
+      "status": "response",
+      "prompt_tokens": 548,
+      "completion_tokens": 229,
+      "recorded_at": "2026-11-01T01:00:49.332709+08:00"
+    },
+    {
+      "reservation_id": "f42fac8b-54f1-4fcf-9ba5-2ffafb43f411",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1136,
+      "status": "response",
+      "prompt_tokens": 548,
+      "completion_tokens": 39,
+      "recorded_at": "2026-11-01T01:00:50.471729+08:00"
+    },
+    {
+      "reservation_id": "28259da6-5f85-4ae9-9750-63e9800f8907",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2301,
+      "status": "response",
+      "prompt_tokens": 609,
+      "completion_tokens": 198,
+      "recorded_at": "2026-11-01T01:00:52.782873+08:00"
+    },
+    {
+      "reservation_id": "d686db56-647a-461c-8ba9-9d54b324f9f1",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1994,
+      "status": "response",
+      "prompt_tokens": 543,
+      "completion_tokens": 197,
+      "recorded_at": "2026-11-01T01:00:54.797811+08:00"
+    },
+    {
+      "reservation_id": "6256f732-fea0-49a9-8329-e3c2c7ac7398",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2268,
+      "status": "response",
+      "prompt_tokens": 545,
+      "completion_tokens": 220,
+      "recorded_at": "2026-11-01T01:00:57.085733+08:00"
+    },
+    {
+      "reservation_id": "369d7b74-1d44-433e-9ec4-fb5b27e6fc76",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1166,
+      "status": "response",
+      "prompt_tokens": 547,
+      "completion_tokens": 47,
+      "recorded_at": "2026-11-01T01:00:58.262869+08:00"
+    },
+    {
+      "reservation_id": "edb5cb9d-9672-4f1b-8116-d30a9245ed3e",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1957,
+      "status": "response",
+      "prompt_tokens": 616,
+      "completion_tokens": 201,
+      "recorded_at": "2026-11-01T01:01:00.227061+08:00"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "results": [
+    {
+      "kind": "goal",
+      "status": "passed",
+      "turns": 3,
+      "proposal": {
+        "title": "四周英语演讲准备计划（每天15分钟）",
+        "summary": "目标是在一个月内完成一段约3分钟的英文演讲，主题是介绍一本书；英语基础一般。每天可用15分钟。由于验收形式尚未确定，本计划以“能连贯完成一段约3分钟的英文演讲”为可修改的暂定标准，最终形式由你确认后再调整。每天15分钟只够安排一项核心行动；可能需要的录音、修改稿等也在这15分钟内完成，不额外占用其他时间。",
+        "steps": [
+          "第1周：选书并列提纲。选一本你读过的书，用3—4个要点搭起开场、書本简介、一个亮点、结尾的框架。",
+          "第2周：写稿和简化句子。用简单、口语化的英文写初稿，控制在3分钟能说完的长度，并标出难读的词。",
+          "第3周：分段练习和录音自查。每次练一段，跟读，修正卡顿处，把难句改短。",
+          "第4周：整篇连贯演练。按暂定验收标准完整说3分钟；若改为现场演讲，可自行安排一次试讲。"
+        ],
+        "session_actions": [
+          {
+            "text": "按当天阶段完成一项核心任务：列提纲、写一小段稿、练一小段，或整篇试讲一次；15分钟内包含必要的记录与整理。",
+            "kind": "core",
+            "minutes": 15
+          }
+        ]
+      }
+    },
+    {
+      "kind": "habit",
+      "status": "passed",
+      "turns": 1,
+      "proposal": {
+        "title": "睡前阅读30天启动计划",
+        "summary": "每天睡前预留10分钟，读满10分钟即算完成。单次预算全部用于阅读本身；准备和记录不另占时间，可在开始前顺手放好书、读完后凭记忆记一笔，若需要额外准备时间请先确认。先连续执行30天，不追求读多少页，只守住睡前这个时间点。",
+        "steps": [
+          "第1周：固定睡前时间点，每天读满10分钟，连续7天",
+          "第2周：保持同一时间点，若某天错过，当天不做补偿性延长时间，第二天照常继续",
+          "第3周：检查是否需要微调睡前时段，仍只投入每天10分钟",
+          "第4周及最后2天：完成剩余天数，累计满30天"
+        ],
+        "session_actions": [
+          {
+            "text": "睡前阅读10分钟，到点即停",
+            "kind": "core",
+            "minutes": 10
+          }
+        ]
+      }
+    }
+  ],
+  "call_metrics": [
+    {
+      "reservation_id": "0c734b73-0c5d-4b84-8373-2844a8e2b77a",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1059,
+      "status": "response",
+      "prompt_tokens": 489,
+      "completion_tokens": 31,
+      "recorded_at": "2026-11-01T00:56:50.589901+08:00"
+    },
+    {
+      "reservation_id": "57a7d59f-c20e-416c-9edd-7fe02efe3a22",
+      "model": "deepseek-flash",
+      "elapsed_ms": 987,
+      "status": "response",
+      "prompt_tokens": 542,
+      "completion_tokens": 31,
+      "recorded_at": "2026-11-01T00:56:51.587004+08:00"
+    },
+    {
+      "reservation_id": "30a1c905-b5d6-4f85-976c-09f9a68d2fc5",
+      "model": "deepseek-flash",
+      "elapsed_ms": 3022,
+      "status": "response",
+      "prompt_tokens": 590,
+      "completion_tokens": 303,
+      "recorded_at": "2026-11-01T00:56:54.622258+08:00"
+    },
+    {
+      "reservation_id": "bfbbbd5f-3318-4232-95a3-d5279d745720",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1980,
+      "status": "response",
+      "prompt_tokens": 485,
+      "completion_tokens": 201,
+      "recorded_at": "2026-11-01T00:56:56.618097+08:00"
+    }
+  ]
+}

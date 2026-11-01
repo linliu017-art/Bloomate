@@ -1,0 +1,1481 @@
+{
+  "started_at": "2026-11-01T00:34:27.797793+08:00",
+  "scope": "8 synthetic cases, non-thinking, up to three calls per case; no automatic retry",
+  "models": {
+    "deepseek": {
+      "model": "deepseek-flash",
+      "mode": "non-thinking",
+      "status": "done"
+    }
+  },
+  "cases": [
+    {
+      "model": "deepseek",
+      "case": "E01",
+      "initial": {
+        "kind": "goal",
+        "goal": "一个月准备产品经理面试",
+        "background": "已有一年相关工作经验",
+        "availability": "每天20分钟",
+        "history": [
+          {
+            "question": "这一个月里，你希望优先准备哪一项：简历与项目复盘、常见面试题练习，还是模拟面试？",
+            "answer": "两周后有一次模拟面试"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "这一个月里，你希望优先准备哪一项：简历与项目复盘、常见面试题练习，还是模拟面试？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 427,
+            "completion_tokens": 33,
+            "total_tokens": 460,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 427
+          },
+          "seconds": 1.1,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "error": "NETWORK_OR_INVALID_RESPONSE",
+          "exception_type": "ValidationError",
+          "seconds": 5.36
+        }
+      ],
+      "status": "error"
+    },
+    {
+      "model": "deepseek",
+      "case": "E02",
+      "initial": {
+        "kind": "goal",
+        "goal": "准备英语演讲",
+        "background": "",
+        "availability": "每天15分钟",
+        "history": [
+          {
+            "question": "你的英语演讲大约多长、什么时候需要？",
+            "answer": "一个月后演讲，基础一般"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你的英语演讲大约多长、什么时候需要？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 419,
+            "completion_tokens": 18,
+            "total_tokens": 437,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 163
+          },
+          "seconds": 1.08,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "一个月英语演讲·每日15分钟起步计划",
+              "summary": "已知：演讲约一个月后进行，自评英语基础一般，每天可投入15分钟；演讲时长、主题、场合未提供，按“1–2分钟短演讲”作待确认假设。每天15分钟需覆盖准备、执行、整理与复盘：单日只推进一小步，周末各留一天做轻量整理；完整目标可能超出预算，故先聚焦“写出短稿并开口练熟”这一可行第一步。",
+              "steps": [
+                "第1天：写下演讲目的与听众（未知处标“待确认”），用一句话拟定主题，3分钟列要点，其余时间读一遍要点。",
+                "第2天：把要点扩成5–8句简单句短稿（约1–2分钟），用5分钟写完，10分钟朗读并标出难念的词。",
+                "第3天：用手机录音朗读短稿一遍（若无可跳过录音），5分钟听回放标出卡顿处，其余时间慢读修正。",
+                "第4天：把短稿改成更口语的表达，删去生僻词，录制或朗读2遍，时间允许就复述一遍大意。",
+                "第5天：拆成开头、主体、结尾三段，每段练2遍，重点记段落衔接句。",
+                "第6天：不计时通读全文1遍，再计时朗读1遍，记录用时并标记最难的一句。",
+                "第7天：整理复盘：回顾本周卡顿点，只挑1–2句重点练习，不追求全篇完美。",
+                "第8–21天：每天15分钟按“3分钟复习旧句+8分钟练一段+4分钟录音或朗读检查”循环，每两天轮换一个段落。",
+                "第22–27天：整体计时模拟2–3次，每次15分钟内完成一遍模拟加指出一个改进点；若无计时工具可改用朗读遍数。",
+                "第28–30天：轻量彩排与复盘，确认演讲时长与主题等未定信息，按用户确认后的标准再调整。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 446,
+            "completion_tokens": 469,
+            "total_tokens": 915,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 190
+          },
+          "seconds": 4.57,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "E03",
+      "initial": {
+        "kind": "goal",
+        "goal": "两天内完成大型求职作品集",
+        "background": "",
+        "availability": "每天10分钟",
+        "history": [
+          {
+            "question": "作品集目前是否已有可用的旧作品或素材（如项目说明、图片、链接）可以直接整理？",
+            "answer": "可以先完成一页简版作品介绍"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "作品集目前是否已有可用的旧作品或素材（如项目说明、图片、链接）可以直接整理？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 423,
+            "completion_tokens": 31,
+            "total_tokens": 454,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 167
+          },
+          "seconds": 0.98,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "两天·每天10分钟：先做一页简版作品介绍",
+              "summary": "已知约束：两天内完成大型求职作品集，但每天只有10分钟可用，完整大型作品集无法在预算内完成，因此缩小为第一步：产出一页简版作品介绍。历史中你表示可先完成一页简版作品介绍，本次按此执行；这不等同于大型作品集完成。待确认假设：你已有可直接引用的旧作品素材（项目说明、图片或链接）；具体投递岗位与作品集形式（文档或网页）尚未提供，先按通用一页文档思路拟定，步骤均可在10分钟内拆分完成。",
+              "steps": [
+                "第1天第1个10分钟：选定一个旧作品，写下项目名、你的角色、做了什么、结果四行要点（准备+执行，约10分钟）",
+                "第1天若有第二个10分钟：从现有素材中挑1张代表性图片或1条链接，标注对应作品（整理，约10分钟）",
+                "第2天第1个10分钟：把要点与图片整理成一页简版介绍，控制在屏幕一屏内（执行，约10分钟）",
+                "第2天若有第二个10分钟：通读一遍，检查是否有编造或未确认信息，标出待补充项（复盘，约10分钟）",
+                "两天结束后用2分钟记录：已有一页简介、还缺哪些作品，作为下一步待确认清单（复盘，约2分钟，可并入当次10分钟）"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 465,
+            "completion_tokens": 327,
+            "total_tokens": 792,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 209
+          },
+          "seconds": 2.93,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "E04",
+      "initial": {
+        "kind": "goal",
+        "goal": "学习基础绘画",
+        "background": "零基础；原先说每周3小时，现更正为每周1小时",
+        "availability": "每周1小时",
+        "history": [
+          {
+            "question": "你希望这每周1小时主要用来练习哪一类基础绘画（例如铅笔画线条、临摹简单静物，或先学观察与比例）？如果不确定，我也可以先按通用铅笔入门安排。",
+            "answer": "以更正后的每周1小时为准"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望这每周1小时主要用来练习哪一类基础绘画（例如铅笔画线条、临摹简单静物，或先学观察与比例）？如果不确定，我也可以先按通用铅笔入门安排。",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 435,
+            "completion_tokens": 53,
+            "total_tokens": 488,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 179
+          },
+          "seconds": 1.33,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "零基础铅笔绘画·每周1小时起步计划",
+              "summary": "已知：零基础，每周仅1小时，且你已确认以更正后的每周1小时为准，不再细化练习方向。待确认假设：默认使用铅笔与普通纸张（若手边没有，可先只做观察练习）；不涉及任何课程或软件。范围取舍：每周1小时无法快速覆盖完整绘画体系，因此先聚焦“观察→线条→简单形”这一最小闭环，每周围绕一个重点；若某周时间不足，可只做记录观察，但不视为完成当周练习标准。",
+              "steps": [
+                "第1周（约60分钟）：用10分钟看一件身边物品并口头描述轮廓与比例，用30分钟在纸上画直线、弧线各5行，最后20分钟画该物品的简单外轮廓，结束后花5分钟记下最卡住的一处。",
+                "第2周（约60分钟）：10分钟选同一物品再看一次，35分钟练习用轻线起稿并修正轮廓，10分钟对比第1周画作，5分钟写一句下周想改的点。",
+                "第3周（约60分钟）：10分钟观察光影明暗，35分钟在简单形上尝试区分亮面与暗面（只用铅笔轻重，不追求完整），10分钟整理画纸并标注日期，5分钟回顾。",
+                "第4周（约60分钟）：10分钟回看前三周记录，40分钟独立画一张简单静物轮廓并加少量明暗，5分钟自查是否达到“形基本可辨”，5分钟决定是否重复或调整重点。",
+                "每次练习后预留5分钟整理画具与记录；若某周只有不足1小时，只做“观察记录”并标记为未完成标准，不计入习惯达成，也不补课、不责备。",
+                "此计划为建议，需你确认后生效；若你希望改为线条专项或临摹专项，可在开始前说明。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 498,
+            "completion_tokens": 422,
+            "total_tokens": 920,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 242
+          },
+          "seconds": 4.25,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "E05",
+      "initial": {
+        "kind": "habit",
+        "goal": "每天睡前读书",
+        "background": "",
+        "availability": "每天10分钟",
+        "history": [
+          {
+            "question": "你希望在睡前读书结束后，用哪一件具体的小事作为“今天完成了”的标记？",
+            "answer": "先尝试30天，每次读10分钟就算完成"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望在睡前读书结束后，用哪一件具体的小事作为“今天完成了”的标记？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 419,
+            "completion_tokens": 28,
+            "total_tokens": 447,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 163
+          },
+          "seconds": 1.0,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "睡前读书·30天试行计划",
+              "summary": "已知：目标为每天睡前读书，每天可用10分钟；历史中你已确认以“30天试行、每次读10分钟即算完成”作为完成标准。未提供的信息（读物、阅读位置、提醒方式）不作假设，均标为待确认或可自选的可选建议。本计划把准备、执行、整理和复盘都计入每天10分钟预算内，因此读10分钟本身需要从这10分钟中安排；若你坚持“10分钟纯阅读”，则每日实际占用约12分钟，请待确认。",
+              "steps": [
+                "第1天（约10分钟）：定下固定的阅读位置和读物（可自选，未定则先用你手边任意一本），睡前开始读，读约7分钟即算本次达标，剩余3分钟用于合书、放回原处并记下“今天完成”。",
+                "第2–29天（每天约10分钟）：睡前到同一位置，读约7分钟后合书放回，用一句话在手机备忘录或纸上记下当天内容或感受，即算完成；若你希望10分钟全部用于阅读，请先确认是否接受每日总占用约12分钟。",
+                "第30天（约10分钟）：照常读约7分钟并记录，然后在最后3分钟内回看30天的记录，写下“继续/调整”的一句话结论。",
+                "中断处理：某天未读不补读、不责备，第二天照常从约7分钟开始；30天试行期内不设全勤要求。",
+                "可选调整（自愿，不计入已确认完成标准）：若某天时间紧张，可只读1分钟并记录，但这仅作为自愿缩短，不视为按10分钟标准完成；是否采用由你自行决定。",
+                "待确认项：读物与阅读位置、提醒方式、以及“10分钟是否包含熟悉与记录”这三项你尚未说明，计划中已按最小依赖方式处理，你可随时更正。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 461,
+            "completion_tokens": 428,
+            "total_tokens": 889,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 205
+          },
+          "seconds": 3.8,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "E06",
+      "initial": {
+        "kind": "habit",
+        "goal": "每周运动三次",
+        "background": "",
+        "availability": "每次20分钟",
+        "history": [
+          {
+            "question": "你希望把每周三次的运动安排在一天中的哪个时间段，或者哪几天？",
+            "answer": "计划持续4周，先从轻度活动开始"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望把每周三次的运动安排在一天中的哪个时间段，或者哪几天？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 419,
+            "completion_tokens": 24,
+            "total_tokens": 443,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 163
+          },
+          "seconds": 0.79,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "每周三次·每次20分钟·为期4周的轻度运动起步计划",
+              "summary": "已确认：每周运动3次、每次20分钟、共4周，并从轻度活动开始。具体运动项目、场地与时段未提供，以下为建议，需你确认后再生效；每次20分钟已包含准备、执行、整理与简短复盘，若某项占用更久可相应缩减执行时间。",
+              "steps": [
+                "第1次（20分钟）：2分钟慢走或原地热身 → 12分钟轻度活动（如慢走、拉伸操，任选其一）→ 4分钟放松整理 → 2分钟记录本次感受与身体反应",
+                "第2次（20分钟）：2分钟热身 → 12分钟与第1次相同或更轻的轻度活动 → 4分钟放松 → 2分钟记录",
+                "第3次（20分钟）：2分钟热身 → 12分钟轻度活动 → 4分钟放松 → 2分钟记录",
+                "每周结束时用5分钟复盘：几次完成、哪次最轻松或最吃力；此5分钟可计入当次整理时间，或单独安排（待你确认）",
+                "第2–4周沿用同一结构，仅按自身感受小幅调整强度，不追求全勤；中断后从下一次轻度活动继续即可",
+                "四周结束后用一次20分钟时段做总结：保留最舒适的做法，作为后续习惯方案（是否继续待你确认）"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 455,
+            "completion_tokens": 305,
+            "total_tokens": 760,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 199
+          },
+          "seconds": 2.81,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "E07",
+      "initial": {
+        "kind": "habit",
+        "goal": "每晚复盘",
+        "background": "",
+        "availability": "周一、三、五各10分钟",
+        "history": [
+          {
+            "question": "你希望每晚复盘时记录或回顾哪一项内容（例如当天完成的一件事、一个卡点或明天的一步），以便为10分钟设定完成标准？",
+            "answer": "持续两周，复盘记录一件做得好的事即可"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望每晚复盘时记录或回顾哪一项内容（例如当天完成的一件事、一个卡点或明天的一步），以便为10分钟设定完成标准？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 423,
+            "completion_tokens": 41,
+            "total_tokens": 464,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 167
+          },
+          "seconds": 1.26,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "每晚复盘习惯（每周一、三、五，各10分钟）",
+              "summary": "已知：目标为每晚复盘；可用时间为周一、三、五各10分钟；历史确认持续两周、每次复盘记录一件做得好的事作为单次完成标准。假设：'每晚'在可用时间下理解为在周一、三、五进行复盘，其余晚上不强制；待确认：周二、四、六、日是否需要安排或完全不做。计划的10分钟已包含准备、执行、整理与复盘本身的时间分配，未包含未确认的软件、设备或素材。",
+              "steps": [
+                "准备（1分钟）：在开始前确定一处写复盘的位置（纸质或电子，依你现有条件自选，待确认），并打开到可书写的状态。",
+                "执行（5分钟）：回忆当天，选出并写下'一件做得好的事'，只写这一项，达到历史确认的单次完成标准即可。",
+                "整理（2分钟）：把记录归入当天日期或固定位置，保持下次可直接续写。",
+                "复盘（2分钟）：快速看一眼本次记录是否完成'一件做得好的事'，并决定下个可用日（周一、三、五中的下一次）是否照此进行。",
+                "周期执行：连续两周在周一、三、五各按上述10分钟流程进行；较短替代行为仅作自愿调整，不计为已完成标准，中断不补做、不责备。",
+                "两周结束时（可另用一次10分钟或你确认的时间）：回看两周记录，确认是否继续或调整频率与内容。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 477,
+            "completion_tokens": 336,
+            "total_tokens": 813,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 221
+          },
+          "seconds": 3.4,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "E08",
+      "initial": {
+        "kind": "goal",
+        "goal": "改善生活状态",
+        "background": "不愿提供健康细节",
+        "availability": "每天15分钟",
+        "history": [
+          {
+            "question": "你希望先从哪一类日常小事开始尝试（例如作息整理、环境收拾、短暂散步或记录心情）？",
+            "answer": "想从散步和规律作息开始，不愿透露健康细节"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望先从哪一类日常小事开始尝试（例如作息整理、环境收拾、短暂散步或记录心情）？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 424,
+            "completion_tokens": 32,
+            "total_tokens": 456,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 168
+          },
+          "seconds": 1.25,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "15分钟/天·散步与作息起步计划",
+              "summary": "已知：你希望从散步和规律作息开始，每天可投入15分钟；健康细节不涉及、不推测。history 已有选择，因此直接给出可编辑计划。假设：15分钟可拆分使用；是否已固定起居时间、是否有合适散步环境待确认。范围取舍：不在预算内追求全面改善，先以“每天都做得到的短时段”为准，单次完成标准建议为：散步≥10分钟、睡前做一次简短作息整理（如固定洗漱或放下屏幕）。是否为已确认标准需你确认。",
+              "steps": [
+                "第1天：选一个每天都能用的10分钟散步时段和5分钟睡前整理时段，写下来，并确认这两个时段是否现实（待确认）。",
+                "每天散步10分钟，按自己的节奏，不必追求距离；结束后用1分钟在手机或纸上记一句感受。",
+                "睡前5分钟做一次固定整理动作（如洗漱或收拾明日要用的东西），完成后打勾，不追求提前睡或全勤。",
+                "第3天用散步的5分钟回顾前两天：哪一段最容易做到，把最难做到的那天改为更短的自愿替代（如室内走动），但不视为已完成标准。",
+                "第7天用原定15分钟中的5分钟做一次复盘：记录坚持天数、最顺和最卡的时段，决定下周是否调整时间，调整前由你确认。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 471,
+            "completion_tokens": 307,
+            "total_tokens": 778,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 215
+          },
+          "seconds": 3.67,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H01",
+      "initial": {
+        "kind": "goal",
+        "goal": "准备一次10分钟的部门分享",
+        "background": "从未做过类似分享",
+        "availability": "两周内每周两次，每次20分钟",
+        "history": [
+          {
+            "question": "你希望这次10分钟分享的主题方向是什么？",
+            "answer": "主题是介绍一个简单的工作经验"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望这次10分钟分享的主题方向是什么？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 432,
+            "completion_tokens": 18,
+            "total_tokens": 450,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 176
+          },
+          "seconds": 0.66,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "10分钟部门分享·最小起步计划",
+              "summary": "已有信息：主题为介绍一个简单的工作经验；你从未做过类似分享；两周内每周两次、每次20分钟，共约80分钟可用。时间需覆盖准备、执行、整理与复盘，因此完整目标（选定经验→成稿→试讲→正式分享→复盘）在80分钟内可行，但每一步都需压缩。假设：分享形式为线上或线下口头讲述加简单文字要点，不制作复杂幻灯片；具体经验内容待你确认。待确认项：分享形式、是否需幻灯片、正式分享的时长是否含提问。",
+              "steps": [
+                "第1次20分钟：写下你想介绍的那条简单工作经验的一句话要点，并以‘做什么—怎么做—效果或注意点’列出3个要点（10分钟）；剩余10分钟用手机或纸笔记录初稿，标记不确定处。",
+                "第2次20分钟：把初稿整理成10分钟讲述顺序，删减到不超过3个要点（15分钟）；留5分钟写下开场一句话和结束一句话。",
+                "第3次20分钟：按正式时长试讲一次并计时，记录卡顿处（10分钟）；根据计时结果增删内容，留5分钟确认是否需要幻灯片及一两行文字要点。",
+                "第4次20分钟：再试讲一次并计时（10分钟）；用剩余10分钟整理最终讲稿要点，写下分享后的2个简单复盘问题，如‘哪部分时间超了’‘听众反馈了什么’。",
+                "正式分享：按最终稿讲述，如时间超出，优先保留3个要点中的前两个。",
+                "分享后10分钟整理与复盘：记录用时和一条改进点，不要求额外加时；若本次预算不足，可只保留第1、2次和一次试讲作为志愿调整。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 460,
+            "completion_tokens": 409,
+            "total_tokens": 869,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 204
+          },
+          "seconds": 4.1,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H02",
+      "initial": {
+        "kind": "habit",
+        "goal": "每周练琴两次",
+        "background": "曾经学过一点，阶段目标还没想清楚",
+        "availability": "每次15分钟",
+        "history": [
+          {
+            "question": "你希望把练琴的哪一项作为每次15分钟的单次完成标准（例如“弹熟一小节”或“慢练音阶5遍”）？",
+            "answer": "先试三周，每次练满15分钟"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望把练琴的哪一项作为每次15分钟的单次完成标准（例如“弹熟一小节”或“慢练音阶5遍”）？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 430,
+            "completion_tokens": 42,
+            "total_tokens": 472,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 174
+          },
+          "seconds": 1.32,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "每周两次·每次15分钟练琴起步计划（试三周）",
+              "summary": "已知：目标为每周练琴2次，每次15分钟，单次完成标准为“练满15分钟”，先试三周；有少量基础，阶段目标未定。以下计划把准备（约2分钟，含取出乐器/谱子/定好计时）、执行（约11分钟）、整理（约1分钟收好乐器与谱）和复盘（约1分钟简单记一句）都算进15分钟内，因此实际弹奏时间略少于15分钟，请确认是否接受，或希望改为“坐下即计时、复盘另算”。选曲与练习内容未提供，暂以你手边现有材料为准，不指定新教材或设备。",
+              "steps": [
+                "第1次（15分钟）：前2分钟取出琴与谱、定15分钟计时；中间11分钟按手边材料慢练一小段并各弹几遍；最后2分钟收好并记一句“今天练了什么、哪里卡住”。",
+                "第2次（15分钟）：同样2分钟准备；11分钟先复习上次卡住的一小段，再弹一遍上次完成的内容；2分钟整理并写一句下次想先做什么。",
+                "每周固定两个你确认的具体时段（如周二、周五晚），若临时有事，可在本周内换到另一个15分钟空档，不必补练更多。",
+                "第3周结束花约10分钟（另计或从某次中匀出，待你确认）回看三条记录，决定是否仍保持每周两次、每次15分钟；阶段目标待这三周后再定。",
+                "中断不责备：漏掉一次就从下周继续原计划，不叠加补课。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 485,
+            "completion_tokens": 374,
+            "total_tokens": 859,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 229
+          },
+          "seconds": 4.06,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H03",
+      "initial": {
+        "kind": "goal",
+        "goal": "今天做完整市场调研报告",
+        "background": "还没有任何素材",
+        "availability": "今天只剩10分钟",
+        "history": [
+          {
+            "question": "这10分钟里，你希望先完成报告大纲，还是先确定要调研哪些市场和主题？",
+            "answer": "愿意先做一个问题清单"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "这10分钟里，你希望先完成报告大纲，还是先确定要调研哪些市场和主题？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 427,
+            "completion_tokens": 29,
+            "total_tokens": 456,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 171
+          },
+          "seconds": 1.12,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "10分钟市场调研报告起步：问题清单",
+              "summary": "已知约束：今天仅剩10分钟、尚无素材，你已确认愿意先做问题清单。完整市场调研报告无法在10分钟内完成，因此本计划只把“问题清单”作为今天可行的第一步，不涉及收集素材或撰写报告。待确认：报告面向谁、关注哪个市场/产品、报告篇幅与截止时间均未提供；后续扩大范围前需由你确认。若你意愿有变，可自行改为大纲，本计划不视为已确认。",
+              "steps": [
+                "0–1分钟：写下报告的一句话目的与预期读者（可先写“待确认”占位）。",
+                "1–3分钟：列出待调研的市场/品类范围，每个只写关键词，不查资料。",
+                "3–7分钟：围绕目标写5–8个调研问题，每题限一行，优先写能影响结论的问题。",
+                "7–9分钟：给每个问题标注“必须回答/可选”，并圈出今天最想先解决的1–2个。",
+                "9–10分钟：把清单保存或截图，写下下一步要确认的3个未知项（范围、读者、截止时间），结束本次10分钟。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 464,
+            "completion_tokens": 265,
+            "total_tokens": 729,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 208
+          },
+          "seconds": 2.86,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H04",
+      "initial": {
+        "kind": "habit",
+        "goal": "练习早起",
+        "background": "不愿透露健康或睡眠细节",
+        "availability": "每天最多5分钟",
+        "history": [
+          {
+            "question": "你想把早起练习固定在一天中的哪个5分钟时段来做，比如起床后立刻，还是睡前？",
+            "answer": "先从固定起床提醒开始，试两周"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你想把早起练习固定在一天中的哪个5分钟时段来做，比如起床后立刻，还是睡前？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 426,
+            "completion_tokens": 29,
+            "total_tokens": 455,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 170
+          },
+          "seconds": 1.08,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "两周固定起床提醒·每日5分钟起步",
+              "summary": "已知：目标是练习早起；每日最多5分钟；history 中你已选择先从固定起床提醒开始，试两周。未提供、不追问：健康与睡眠细节、具体起床时间、设备或闹钟方式。以下均为建议，待你确认后生效。范围取舍：5分钟/天不足以完成整套早起习惯养成，因此把两周目标缩小为“每天完成一次固定起床提醒动作”；如你愿意，也可自行调整强度，但较短替代不算已确认标准的完成。",
+              "steps": [
+                "第1天（约3分钟）：由你选定一个目标起床时间并记下（仅你可见），确认使用哪种提醒方式（如手机闹钟）；不猜测设备，待你确认。",
+                "第1–14天每天（约2分钟）：按已设定的提醒接受一次起床提示，完成后在简易记录上打一个勾；未完成不必补做或自责。",
+                "每天睡前或次日早晨（约2分钟，计入当天5分钟）：看一眼记录并写下当天提醒是否生效；只记录、不评判。",
+                "第14天（约5分钟）：用当天5分钟回顾两周记录，判断是否继续同一提醒或调整目标时间；下一步由你确认，不提前替你决定。",
+                "时间说明：准备约3分钟、执行约2分钟、整理约2分钟、复盘在第14天约5分钟，均包含在每日5分钟内；如实际耗时超出，请告知我以缩小范围。待确认：目标起床时间、提醒方式、记录载体。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 466,
+            "completion_tokens": 338,
+            "total_tokens": 804,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 210
+          },
+          "seconds": 3.12,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H05",
+      "initial": {
+        "kind": "goal",
+        "goal": "一周内完成摄影入门",
+        "background": "刚开始没有经验，原来每周两小时，后来改为每周半小时",
+        "availability": "总共30分钟",
+        "history": [
+          {
+            "question": "这 30 分钟你是想先用手机或现有设备拍出第一组练习照片，还是先了解摄影基础知识？",
+            "answer": "以更正后的半小时为准"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "这 30 分钟你是想先用手机或现有设备拍出第一组练习照片，还是先了解摄影基础知识？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 435,
+            "completion_tokens": 33,
+            "total_tokens": 468,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 179
+          },
+          "seconds": 1.18,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "30 分钟摄影入门第一步",
+              "summary": "已知：你是零基础，整周共 30 分钟，之前每周安排已更正为半小时。待确认假设：使用你现有设备（手机或相机均可，不需要额外购买任何器材）；练习以“先拍后看”为主，不追求系统学完理论。范围取舍：一周内无法完成完整摄影入门课程，因此把目标缩小为在 30 分钟内完成一次最小闭环，让你亲手拍出第一组照片，并知道下次练什么。",
+              "steps": [
+                "第 0–3 分钟（准备）：选定你现有的一台设备并确认能正常拍摄；在纸上写一句今天想拍清楚的一个对象（如桌上的杯子），不额外添加设备或软件。",
+                "第 3–5 分钟（准备）：用 2 分钟看一下设备的基本对焦方式，并检查光线，让被拍对象侧面受光、避免逆光。",
+                "第 5–17 分钟（执行）：围绕这一对象拍 6–8 张，保持同一位置，分别改变距离、角度和取景构图，每拍一张就回看是否对焦清晰。",
+                "第 17–22 分钟（整理）：删掉模糊或明显倾斜的照片，保留 2–3 张，并各用一句话写下你喜欢它的原因。",
+                "第 22–27 分钟（复盘）：对照保留的照片，找出一个下次要改的点（如更靠近、放低角度或让背景更干净），写在纸上。",
+                "第 27–30 分钟（复盘收尾）：把这一个改进点定为下次练习的唯一目标；若之后想增加时间或系统学习，可在下次开始前再确认节奏和单次完成标准。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 476,
+            "completion_tokens": 430,
+            "total_tokens": 906,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 220
+          },
+          "seconds": 4.04,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H06",
+      "initial": {
+        "kind": "goal",
+        "goal": "一周内学会简单的视频剪辑",
+        "background": "只有手机，没安装任何软件",
+        "availability": "这周总共20分钟",
+        "history": [
+          {
+            "question": "你希望这周剪出什么内容（例如旅行片段、日常记录或某个主题）？",
+            "answer": "愿意先试剪一个10秒短片"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望这周剪出什么内容（例如旅行片段、日常记录或某个主题）？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 432,
+            "completion_tokens": 28,
+            "total_tokens": 460,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 176
+          },
+          "seconds": 1.04,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "手机10秒短片·20分钟起步计划",
+              "summary": "已知：仅有手机、未安装剪辑软件、本周共20分钟、愿意先试剪10秒短片。取舍：20分钟不足以系统学剪辑，只做“装应用—套模板剪10秒—导出—回看”的最小闭环，算作第一步而非完整学会。假设：手机可联网下载应用、有少量可剪的已有素材（待确认）；若素材需现拍会额外耗时。软件选择仅为建议，需你同意后再安装。",
+              "steps": [
+                "第1–4分钟：在手机应用商店搜索并安装一款免费剪辑应用（建议剪映或CapCut，仅为建议，待你确认后安装）。",
+                "第5–8分钟：打开应用，选择“模板/一键成片”，用手机里已有的3–5段短素材（待确认是否有素材；没有则先拍2–3段10秒内片段）套用最简单的模板。",
+                "第9–14分钟：把成片裁剪到约10秒，不加复杂特效，只保留一次字幕或音乐（可选）。",
+                "第15–17分钟：导出并保存到相册，播放一遍确认画面和声音正常。",
+                "第18–20分钟：记录一条复盘：哪一步最卡、下次想改哪一处；本周到此结束，不追进度。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 471,
+            "completion_tokens": 292,
+            "total_tokens": 763,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 215
+          },
+          "seconds": 2.8,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H07",
+      "initial": {
+        "kind": "habit",
+        "goal": "每周练习乐器三次",
+        "background": "不知道具体要练什么内容",
+        "availability": "每次10分钟",
+        "history": [
+          {
+            "question": "你希望先用哪一次练习来定一个最简单的起步动作，比如只选定一首短曲或一个音阶？",
+            "answer": "先试两周，练满10分钟算完成"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望先用哪一次练习来定一个最简单的起步动作，比如只选定一首短曲或一个音阶？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 427,
+            "completion_tokens": 32,
+            "total_tokens": 459,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 171
+          },
+          "seconds": 0.95,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "每周三次·10分钟乐器起步计划（两周试验）",
+              "summary": "已知：目标为每周练习乐器三次，每次10分钟，按你的确认先试两周，练满10分钟即算完成；你暂不清楚具体练习内容。范围取舍：每次10分钟已包含准备与整理，完整曲目或系统进阶不在本次范围。假设（待确认）：乐器种类、可用教材或曲谱、练习地点与环境均未知，以下内容为低依赖的最小起步建议，不代表你已有这些条件；练习内容选择属于建议，需你确认后生效。",
+              "steps": [
+                "第1次（10分钟）：先用1分钟确认乐器可正常使用、所在环境可安静练习（条件待确认），再用9分钟随意演奏或试音，感受最顺手的操作。",
+                "第1次结束后花0分钟额外记录：在手机或纸上写一句‘今天最顺手的动作’，作为下次入口；此记录计入当日10分钟内，不另加时间。",
+                "第2次（10分钟）：用1分钟选取一个最简单的短片段（如一个音阶或一首短曲的开头），建议但待你确认；用8分钟重复该片段，最后1分钟停下整理乐器。",
+                "第3次（10分钟）：重复第2次的短片段，前2分钟慢速，后8分钟按自己舒适的速度练，结束时整理并写一句感受。",
+                "第2周沿用同样结构：每次10分钟内按‘1分钟准备—8分钟练习—1分钟整理’进行，内容可继续同一短片段，也可由你更换。",
+                "两周共6次练习完成后，花5分钟（可另安排或计入某一次）回看记录，判断是否继续该内容与频率；此复盘时间需你确认是否愿意额外支出。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 472,
+            "completion_tokens": 382,
+            "total_tokens": 854,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 216
+          },
+          "seconds": 3.94,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H08",
+      "initial": {
+        "kind": "goal",
+        "goal": "三天内准备一场完整的公开分享",
+        "background": "没有任何材料",
+        "availability": "每天只有5分钟",
+        "history": [
+          {
+            "question": "这场公开分享的主题或大致方向是什么？",
+            "answer": "愿意先整理三条分享提纲"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "这场公开分享的主题或大致方向是什么？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 427,
+            "completion_tokens": 17,
+            "total_tokens": 444,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 171
+          },
+          "seconds": 1.17,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "三天极简公开分享起步计划（每天5分钟）",
+              "summary": "已知：三天内准备一场完整公开分享，目前没有任何材料，每天可用5分钟。history中你已表达“愿意先整理三条分享提纲”，因此本计划以三条提纲为最小起点，不假设主题、形式、听众或设备。三天共15分钟，无法完成一场完整公开分享的全部准备；因此明确缩小为可行第一步：三天内产出三条可编辑提纲草稿，完整内容与排期需后续确认。以下时间均为建议，待你确认后生效。",
+              "steps": [
+                "第1天第1分钟：先定一句分享目的（对谁说、想让对方带走什么），用一句话写下即可。",
+                "第1天第2–4分钟：写下第1条提纲要点，只写标题和一句说明，不展开。",
+                "第1天第5分钟：把这句话和要点存入你已有的任意笔记位置，标记“提纲草稿”。",
+                "第2天第1–2分钟：回看第1天草稿，补充第2条提纲要点（标题加一句说明）。",
+                "第2天第3–4分钟：补充第3条提纲要点（标题加一句说明）。",
+                "第2天第5分钟：通读三条，标出最不确定的一条，作为待确认项。",
+                "第3天第1–3分钟：把三条提纲排成开场、主体、收尾的顺序，只调整顺序不扩写。",
+                "第3天第4分钟：写下一句“分享结束希望听众做什么或记住什么”。",
+                "第3天第5分钟：保存草稿并记下后续需确认的三件事：分享形式、听众规模、是否需要演示材料。",
+                "时间提醒：完整公开分享的准备（内容展开、演练、材料制作）无法在每天5分钟内完成，上述仅为可编辑提纲草稿；后续步骤与时间安排建议由你确认后再排。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 453,
+            "completion_tokens": 411,
+            "total_tokens": 864,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 197
+          },
+          "seconds": 3.3,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H09",
+      "initial": {
+        "kind": "habit",
+        "goal": "每天记录心情",
+        "background": "不愿透露心理健康细节",
+        "availability": "每天3分钟",
+        "history": [
+          {
+            "question": "你希望把每天3分钟的心情记录固定在哪个时间或情境下（例如起床后、睡前）？",
+            "answer": "可以先试七天，每次写一句话"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望把每天3分钟的心情记录固定在哪个时间或情境下（例如起床后、睡前）？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 424,
+            "completion_tokens": 30,
+            "total_tokens": 454,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 168
+          },
+          "seconds": 1.05,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "七天一句话心情记录（试运行）",
+              "summary": "已知：目标为每天记录心情，每天可用3分钟，历史上你提出先试七天、每次写一句话，以此作为本次试运行的完成标准。尊重你不愿透露的健康细节，不涉及任何健康判断。待确认：记录固定在什么时间或情境（如起床后或睡前）尚未确定，以下步骤中用“自选固定情境”标记；记录载体（纸质或手机）也待你确认，可用任一现有方式，无需新购设备。七天结束后再一起决定是否延续或调整。",
+              "steps": [
+                "第1天（约3分钟）：选定一个每天都能遇到的固定情境作为触发点（如起床后或睡前，待你确认），并用现有方式（纸笔或手机备忘录）写下第一句心情记录。",
+                "第2–6天（每天约2分钟）：在选定的固定情境出现时，用一句话记录当天心情；若某天错过，第二天直接继续，不补记、不自责。",
+                "第7天（约3分钟）：写第七句记录，并花约1分钟回看这七句，只记录“是否想继续、想调整时间或写法”，不评判内容。",
+                "复盘安排（含在第7天的3分钟内，或另约时间，待你确认）：根据七天体验决定是否把固定情境、一句话标准作为下一阶段方案，需你确认后才生效。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 464,
+            "completion_tokens": 304,
+            "total_tokens": 768,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 208
+          },
+          "seconds": 3.1,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H10",
+      "initial": {
+        "kind": "goal",
+        "goal": "准备一次英语自我介绍",
+        "background": "之前说每天30分钟，现更正为每天5分钟",
+        "availability": "持续两周，每天5分钟",
+        "history": [
+          {
+            "question": "你这次英语自我介绍主要用在什么场合（如课堂、面试、社交活动）？",
+            "answer": "计划中所有准备和复盘都要计入5分钟"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你这次英语自我介绍主要用在什么场合（如课堂、面试、社交活动）？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 436,
+            "completion_tokens": 26,
+            "total_tokens": 462,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 180
+          },
+          "seconds": 0.63,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "每天5分钟·两周英语自我介绍起步计划",
+              "summary": "已知：目标为准备一次英语自我介绍；时间已更正为每天5分钟，持续两周；你要求准备、执行、整理和复盘都计入这5分钟。未确认：使用场合、目标时长、听众与风格偏好，均属假设/待确认项，不影响先启动。范围取舍：两周×5分钟合计约70分钟，包含全部准备与复盘，不追求逐字稿精修；先完成一版可用的短介绍，再按剩余时间小幅打磨。若你确认实际场合后需调整内容，可再修改本计划。",
+              "steps": [
+                "第1天（5分钟）：用2分钟写下介绍要点（称呼、身份、1个兴趣、1句结尾），用3分钟口头说一遍并记下卡住的地方。",
+                "第2–3天（各5分钟）：每天先用1分钟看昨天记录，再用3分钟逐句练要点，最后1分钟复盘哪句最不顺。",
+                "第4天（5分钟）：用4分钟串起全文完整说1–2遍，用1分钟记录时长和需要删减的句子。",
+                "第5–7天（各5分钟）：按第4天记录删减到更短版本，每天3分钟练习、1分钟录音或默记要点、1分钟复盘。",
+                "第8天（5分钟）：用5分钟做一次完整演练并计时，记录是否能在目标时长内说完（目标时长待你确认）。",
+                "第9–11天（各5分钟）：每天2分钟准备、2分钟练习、1分钟复盘，重点修正发音或停顿中最影响理解的一处。",
+                "第12–13天（各5分钟）：模拟实际场合说一遍（场合待确认），用3分钟练习、2分钟整理最后要改的1处。",
+                "第14天（5分钟）：用4分钟完成最终演练，用1分钟记录本次成果与下次可改之处；计划结束。",
+                "备注：若某天中断，不要求补练，下一次直接从当天步骤继续；较短替代练习仅作自愿调整，不计为当天已完成标准。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 475,
+            "completion_tokens": 460,
+            "total_tokens": 935,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 219
+          },
+          "seconds": 3.73,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H11",
+      "initial": {
+        "kind": "goal",
+        "goal": "准备搬家物品清单",
+        "background": "不愿说明详细住址，也不知道用什么软件",
+        "availability": "明天只有10分钟",
+        "history": [
+          {
+            "question": "你希望清单先覆盖哪一类物品（例如衣物、厨房用品、文件杂物）？",
+            "answer": "先列出最重要的五类物品"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望清单先覆盖哪一类物品（例如衣物、厨房用品、文件杂物）？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 431,
+            "completion_tokens": 27,
+            "total_tokens": 458,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 175
+          },
+          "seconds": 1.09,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "10分钟搬家物品清单起步计划",
+              "summary": "已知：明天可用约10分钟；希望清单先覆盖最重要的五类物品；不透露详细住址，也未确定使用什么工具。假设：不需要按房间细分，只需五类框架和每类首批物品，作为后续补充的起点；所有内容均为建议，待你确认。因时间有限，本次只完成五类骨架和首批条目，不追求清单完整。",
+              "steps": [
+                "第0–1分钟：确定五类物品，使用常见分类作为建议：证件与重要文件、衣物与个人用品、厨房与餐具、电子设备与线材、卫生与日常用品；可自行替换类别。",
+                "第1–6分钟：每类只写3–5件最先想到的物品，不追求齐全，用纸笔或手机备忘录均可，不必安装新软件。",
+                "第6–8分钟：在每类旁标记一个待确认项，例如是否带走大件、是否需要单独打包易碎品。",
+                "第8–10分钟：把这份五类骨架定为初版，约定下次有空时再补充，不要求明天完成全部清单。",
+                "以上时间合计约10分钟，含准备和整理；是否按此执行需你确认，具体分类和物品以你的实际情况为准。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 467,
+            "completion_tokens": 278,
+            "total_tokens": 745,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 211
+          },
+          "seconds": 3.33,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H12",
+      "initial": {
+        "kind": "habit",
+        "goal": "每周做两次手工",
+        "background": "没有说明做什么手工，也不想买东西",
+        "availability": "每次15分钟",
+        "history": [
+          {
+            "question": "你希望先用手边现有材料做哪一类简单手工，比如折纸或旧物改造？",
+            "answer": "先尝试两周，每次动手15分钟"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "你希望先用手边现有材料做哪一类简单手工，比如折纸或旧物改造？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 428,
+            "completion_tokens": 29,
+            "total_tokens": 457,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 172
+          },
+          "seconds": 1.11,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "每周两次·15分钟手工起步计划（两周试行）",
+              "summary": "已知约束：每周两次、每次15分钟、不购买新材料；历史回答仅确认“先尝试两周，每次动手15分钟”，未说明具体手工类型，也未确认材料、工具或偏好。范围取舍：15分钟内含准备、执行、整理与复盘，实际动手约8–10分钟；建议暂不购买任何材料，用具仅为示例，可随时替换或待确认。",
+              "steps": [
+                "第1次（15分钟）：准备2分钟，从手边现有纸张、包装盒或旧物中自选一种材料；动手8–10分钟做最简单的尝试（如折纸或剪贴，具体类型待确认）；整理2分钟，记录1分钟“下次想继续还是换一种”。",
+                "两次练习之间不安排任务，可在方便时顺手观察家里可用的现有材料并记下，不额外占用预算。",
+                "第2次（15分钟）：准备2分钟，沿用上次材料或换成记录下的另一种；动手8–10分钟；整理2分钟；复盘1分钟，写下哪一步最顺手。",
+                "两周结束时用一次15分钟内的复盘：回看两次记录，判断是否继续同一类型或调整，不需补做未完成次数。",
+                "如某次只有更短时间，可自愿改为仅整理材料或看一眼记录，这不算完成当次标准，也不影响后续安排。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 468,
+            "completion_tokens": 310,
+            "total_tokens": 778,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 212
+          },
+          "seconds": 3.07,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H13",
+      "initial": {
+        "kind": "goal",
+        "goal": "今晚完成家庭预算分析",
+        "background": "没有整理过账单",
+        "availability": "只剩8分钟",
+        "history": []
+      },
+      "turns": [
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "8分钟家庭预算分析起步",
+              "summary": "已知：今晚只有8分钟，之前没有整理过账单，因此完整预算分析无法在预算内完成。本次范围缩小为建立记账起点：列出支出类别并记录本周可见支出；具体金额、账单来源和工具均待确认，不假设你已有现成账单或软件。",
+              "steps": [
+                "第1分钟：在纸或手机备忘录写下固定和日常支出类别（如房租/房贷、水电、饮食、交通、其他），不填金额。",
+                "第2–6分钟：凭记忆或手边凭证，给每个类别记下最近一周的大致支出，记不清就标“待补”。",
+                "第7分钟：圈出最想先弄清的一个类别，作为下次整理重点。",
+                "第8分钟：设一个下周的10–15分钟提醒，用来补充金额并做复盘；频率和单次标准待你确认。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 426,
+            "completion_tokens": 201,
+            "total_tokens": 627,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 170
+          },
+          "seconds": 2.24,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H14",
+      "initial": {
+        "kind": "habit",
+        "goal": "每晚和家人聊聊",
+        "background": "家人可用时间还没确定",
+        "availability": "我每天只有5分钟",
+        "history": [
+          {
+            "question": "家人在哪个固定时段最可能有空（例如晚饭后或睡前）？",
+            "answer": "每次沟通5分钟是建议目标，不勉强对方"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "家人在哪个固定时段最可能有空（例如晚饭后或睡前）？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 427,
+            "completion_tokens": 24,
+            "total_tokens": 451,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 171
+          },
+          "seconds": 0.96,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "每晚5分钟家庭闲聊起步计划",
+              "summary": "已知：你每天约有5分钟可用于和家人聊聊；你表示每次沟通5分钟是建议目标、不勉强对方；家人具体可用时段尚未确定，作为待确认项。范围取舍：完整目标（每晚都聊上）暂不设硬性标准，先以“发出一次简短邀约或分享一句日常”作为最小起步；若家人不在，可用留言代替，不计为未完成。准备、执行、整理、复盘均计入5分钟。",
+              "steps": [
+                "0–1分钟：准备——想好一句开场或分享今天的一件小事，不预先要求对方回应。",
+                "1–3分钟：执行——在你能用的5分钟内发出简短消息或当面说一两句，话题轻、不追问。",
+                "3–4分钟：整理——把这件事收尾，不延长追问；对方未回复就自然停下。",
+                "4–5分钟：复盘——在心里记一句今天是否顺利，不用记录或评估全勤。",
+                "待确认：与家人核对一个大致方便的时段（如晚饭后或睡前），确认后再把执行时间固定，否则暂按你当前可用的5分钟灵活进行。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 465,
+            "completion_tokens": 257,
+            "total_tokens": 722,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 209
+          },
+          "seconds": 2.8,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    },
+    {
+      "model": "deepseek",
+      "case": "H15",
+      "initial": {
+        "kind": "goal",
+        "goal": "为工作做一个总结",
+        "background": "计划原本一个小时，后来改为只有15分钟",
+        "availability": "今天15分钟，准备复盘也计算在内",
+        "history": [
+          {
+            "question": "这15分钟要总结的是哪一段时间的工作（例如今天、本周），以及你想让总结落到什么结果（口头汇报要点、简短文字或只做个人复盘）？",
+            "answer": "先写三条重要结果即可"
+          }
+        ]
+      },
+      "turns": [
+        {
+          "result": {
+            "question": "这15分钟要总结的是哪一段时间的工作（例如今天、本周），以及你想让总结落到什么结果（口头汇报要点、简短文字或只做个人复盘）？",
+            "plan": null
+          },
+          "usage": {
+            "prompt_tokens": 436,
+            "completion_tokens": 44,
+            "total_tokens": 480,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 180
+          },
+          "seconds": 1.48,
+          "returned_model": "deepseek-flash"
+        },
+        {
+          "result": {
+            "question": null,
+            "plan": {
+              "title": "15分钟工作三条成果速记",
+              "summary": "已知：今天共15分钟，包含准备与复盘；目标为先写出三条重要结果。假设：总结范围可为近期工作，成果由你自行回忆，不需额外素材；待确认：具体覆盖时间段与三条结果的用途（仅个人复盘或口头汇报）。时间较紧，只做个人速记版，不做完整汇报稿。",
+              "steps": [
+                "0–2分钟准备：打开空白文档或纸，写下本次总结覆盖的时间范围（若不确定，就写‘近期’），并列出能想到的工作事项关键词。",
+                "2–9分钟执行：从关键词中挑出最重要的三条结果，每条用一句话写‘做了什么+带来什么结果’，不展开细节。",
+                "9–12分钟整理：把三条按重要性排序，各补一个关键数字或事实（没有就标‘待确认’），删掉多余修饰。",
+                "12–15分钟复盘：通读一遍，标记哪条最值得口头讲、哪条信息不全留待以后补；确认三条已写清即结束，不追加任务。"
+              ]
+            }
+          },
+          "usage": {
+            "prompt_tokens": 489,
+            "completion_tokens": 237,
+            "total_tokens": 726,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 233
+          },
+          "seconds": 2.95,
+          "returned_model": "deepseek-flash"
+        }
+      ],
+      "status": "plan"
+    }
+  ],
+  "finished_at": "2026-11-01T00:36:11.903591+08:00"
+}

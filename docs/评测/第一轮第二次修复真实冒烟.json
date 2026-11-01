@@ -1,0 +1,86 @@
+{
+  "results": [
+    {
+      "kind": "goal",
+      "status": "no_plan_after_four_turns"
+    },
+    {
+      "kind": "habit",
+      "status": "passed",
+      "turns": 1,
+      "proposal": {
+        "title": "睡前阅读30天习惯计划",
+        "summary": "以“每次读满10分钟算完成”为标准，按每天最多10分钟安排。单次预算刚好等于完成标准，因此每次只安排核心阅读行动；任何额外的选书、记录或回顾都需要你先确认额外时间，计划中不占用预算、也不假装顺带完成。",
+        "steps": [
+          "每天睡前预留一个不被打扰的10分钟时段。",
+          "到点直接翻开正在读的内容，连续阅读。",
+          "读满10分钟即视为当天完成；若没读满则不记完成。",
+          "连续执行30天，不额外增加整理或记录环节。"
+        ],
+        "session_actions": [
+          {
+            "text": "睡前直接阅读，满10分钟即完成当天习惯",
+            "kind": "core",
+            "minutes": 10
+          }
+        ]
+      }
+    }
+  ],
+  "call_metrics": [
+    {
+      "reservation_id": "311c9ad2-f095-409a-a9ad-c4d18acc0f1d",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1113,
+      "status": "response",
+      "prompt_tokens": 547,
+      "completion_tokens": 27,
+      "recorded_at": "2026-11-01T00:57:47.895116+08:00"
+    },
+    {
+      "reservation_id": "5e55219c-e9f8-42c1-89d6-94c0cdbf584b",
+      "model": "deepseek-flash",
+      "elapsed_ms": 766,
+      "status": "response",
+      "prompt_tokens": 596,
+      "completion_tokens": 28,
+      "recorded_at": "2026-11-01T00:57:48.675297+08:00"
+    },
+    {
+      "reservation_id": "b05c79d3-5d79-498e-b2d3-49c2c66ff5ee",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1024,
+      "status": "response",
+      "prompt_tokens": 641,
+      "completion_tokens": 40,
+      "recorded_at": "2026-11-01T00:57:49.705949+08:00"
+    },
+    {
+      "reservation_id": "d5c27441-911d-424d-946b-c9a3d5daf8d9",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1011,
+      "status": "response",
+      "prompt_tokens": 698,
+      "completion_tokens": 22,
+      "recorded_at": "2026-11-01T00:57:50.722955+08:00"
+    },
+    {
+      "reservation_id": "009473f1-bcd2-4ccf-b62c-bb7585d5fd1b",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1037,
+      "status": "response",
+      "prompt_tokens": 737,
+      "completion_tokens": 34,
+      "recorded_at": "2026-11-01T00:57:51.771009+08:00"
+    },
+    {
+      "reservation_id": "75795030-0d36-4c8a-8e37-9dbda4d89b23",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1972,
+      "status": "response",
+      "prompt_tokens": 543,
+      "completion_tokens": 168,
+      "recorded_at": "2026-11-01T00:57:53.758042+08:00"
+    }
+  ]
+}

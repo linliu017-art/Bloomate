@@ -1,0 +1,275 @@
+{
+  "results": [
+    {
+      "case": "F01",
+      "kind": "goal",
+      "status": "passed",
+      "questions": [],
+      "proposal": {
+        "title": "30天准备三分钟英文读书分享",
+        "summary": "每天15分钟，围绕一本你喜欢的书，先定书目与主线，再逐段写稿、练发音、做完整演练，最后录音检查并准备现场表达。计划持续30天：第1至4周用于写稿和分段练习，最后2天用于整合与彩排。所有时间按每次15分钟安排，包含准备、练习和必要记录。",
+        "steps": [
+          "第1步：选书并确定分享主线（为什么喜欢、最打动你的点、推荐理由）",
+          "第2步：用中文列出要点，再查需要的英文表达",
+          "第3步：写出三分钟英文分享初稿，按开头、内容、结尾分段",
+          "第4步：每天练一段，标记不熟的词和句子",
+          "第5步：反复朗读修改，控制长度到约三分钟",
+          "第6步：进行完整演练并录音，检查流利度和清晰度",
+          "第7步：彩排并准备现场开场与收尾"
+        ],
+        "session_actions": [
+          {
+            "text": "用1句话写出这本书最打动你的点，并用英文写下3个关键词",
+            "kind": "core",
+            "minutes": 10
+          },
+          {
+            "text": "朗读已写英文内容并跟读难词，记录1个需要下次改进的地方",
+            "kind": "other",
+            "minutes": 5
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 15,
+        "habit_completion_minutes": null
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": false,
+        "session_total_minutes": 15
+      }
+    },
+    {
+      "case": "F02",
+      "kind": "goal",
+      "status": "passed",
+      "questions": [
+        "这两天你每天能拿出的是10分钟；完成一页求职作品集提纲的最低标准是什么（例如：只列1个项目标题和3个要点）？",
+        "两天里要交的“一页提纲”，你希望它至少包含哪些栏目（例如：项目标题、我的角色、问题、做法、结果、待补素材）？"
+      ],
+      "proposal": {
+        "title": "两天求职作品集一页提纲最小方案（可编辑）",
+        "summary": "每天只有10分钟，只够做核心起草/补全动作，无法同时安排额外准备、整理或复盘。第一天：一页提纲，先写项目标题、我的角色、问题、做法、结果、待补素材六个栏目名，并给每个栏目写一句占位内容（不确定处标“待补”）。第二天：在第一天基础上把占位内容改成可读的一句要点，优先补齐“我的角色、问题、做法、结果”，仍不确定的保留“待补素材”。栏目是否采用、内容是否准确需你确认；若需要额外核对、排版或整理，需要你先确认额外时间，本方案不假装这些不耗时。",
+        "steps": [
+          "第一天10分钟：起草一页提纲的栏目名（项目标题、我的角色、问题、做法、结果、待补素材），每个栏目写一句占位内容。",
+          "第二天10分钟：把占位内容改成一句可读要点，优先补全角色、问题、做法、结果；不确定处保留“待补素材”。"
+        ],
+        "session_actions": [
+          {
+            "text": "写下一夜提纲的六个栏目名，并各写一句占位内容（不确定标待补）",
+            "kind": "core",
+            "minutes": 10
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 10,
+        "habit_completion_minutes": null
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": false,
+        "session_total_minutes": 10
+      }
+    },
+    {
+      "case": "F03",
+      "kind": "habit",
+      "status": "passed",
+      "questions": [],
+      "proposal": {
+        "title": "睡前阅读30天：每日10分钟核心计划",
+        "summary": "这份计划围绕你提出的“睡前阅读30天、每次读满10分钟才算完成”来安排。你把每天可用的时间定为10分钟，正好等于完成标准，所以单次安排只保留一项核心动作：睡前连续阅读10分钟；不额外安排准备、记录、回顾或整理，因为这些都会占用同一段10分钟，而当前时间预算没有余量。若你以后希望加入打卡、选书或复盘，需要先确认额外时间。计划共30天：第1至4周（第1至28天）每天完成10分钟睡前阅读，最后2天（第29至30天）继续同样节奏并收尾。具体读什么由你自行选择，计划不替你假定书目、语言或设备。",
+        "steps": [
+          "第1天：睡前连续阅读10分钟，达到10分钟即计为当天完成。",
+          "第2至7天：每天睡前连续阅读10分钟，逐日完成。",
+          "第8至14天：保持每天睡前连续阅读10分钟，不增加额外任务。",
+          "第15至21天：继续每天睡前连续阅读10分钟，按同一标准完成。",
+          "第22至28天：每天睡前连续阅读10分钟，累计完成第4周。",
+          "第29至30天：最后2天仍按睡前连续阅读10分钟完成，达到30天目标。"
+        ],
+        "session_actions": [
+          {
+            "text": "睡前连续阅读10分钟",
+            "kind": "core",
+            "minutes": 10
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 10,
+        "habit_completion_minutes": 10
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": true,
+        "session_total_minutes": 10
+      }
+    },
+    {
+      "case": "F04",
+      "kind": "habit",
+      "status": "passed",
+      "questions": [
+        "你希望把“轻度运动”具体定为哪一种或哪几种可执行的活动（例如快走、拉伸、轻量自重训练），以便计划直接按它安排？"
+      ],
+      "proposal": {
+        "title": "四周每周三次轻度运动最小方案",
+        "summary": "每次20分钟，其中至少15分钟核心轻度运动算完成；四周共12次。活动类型尚未确定，你可自行选一种低强度活动，如快走、拉伸或轻量自重训练。以下按每次20分钟只安排核心动作，不另设准备、记录或回顾；这些若需要只能先确认额外时间。",
+        "steps": [
+          "第1周：完成3次，每次选一种轻度活动并持续15分钟以上",
+          "第2周：继续3次，保持同样活动或换一种低强度活动",
+          "第3周：继续3次，尽量固定每周的三个时段",
+          "第4周：完成最后3次，累计达成12次"
+        ],
+        "session_actions": [
+          {
+            "text": "进行15分钟以上轻度运动（快走、拉伸或轻量自重训练任选一种）",
+            "kind": "core",
+            "minutes": 15
+          }
+        ]
+      },
+      "constraints": {
+        "session_budget_minutes": 20,
+        "habit_completion_minutes": 15
+      },
+      "check": {
+        "budget_checked": true,
+        "completion_checked": true,
+        "session_total_minutes": 15
+      }
+    },
+    {
+      "case": "F05",
+      "kind": "goal",
+      "status": "error",
+      "questions": [
+        "这次“两周准备一次工作分享”的具体分享日期或最晚完成期限是哪一天？",
+        "分享的内容主题或大致方向你能先确定一个吗？"
+      ],
+      "error_code": "MODEL_FAILED"
+    }
+  ],
+  "status": "done",
+  "call_metrics": [
+    {
+      "reservation_id": "87c7f01d-fb4c-49d6-8ce5-3e328247409f",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2900,
+      "status": "response",
+      "prompt_tokens": 633,
+      "completion_tokens": 285,
+      "recorded_at": "2026-11-01T01:05:16.370986+08:00"
+    },
+    {
+      "reservation_id": "21bff4b4-2d7c-4103-b000-5227c64062cf",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1279,
+      "status": "response",
+      "prompt_tokens": 635,
+      "completion_tokens": 41,
+      "recorded_at": "2026-11-01T01:05:17.671651+08:00"
+    },
+    {
+      "reservation_id": "19dd16ad-6e9d-4a94-89aa-2dce9db9154b",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1209,
+      "status": "response",
+      "prompt_tokens": 698,
+      "completion_tokens": 45,
+      "recorded_at": "2026-11-01T01:05:18.893492+08:00"
+    },
+    {
+      "reservation_id": "72a087e2-f1ee-4505-927e-2cb0d219884c",
+      "model": "deepseek-flash",
+      "elapsed_ms": 3160,
+      "status": "response",
+      "prompt_tokens": 790,
+      "completion_tokens": 338,
+      "recorded_at": "2026-11-01T01:05:22.065860+08:00"
+    },
+    {
+      "reservation_id": "c90684ab-9725-4b2b-a6d5-366251a49545",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2431,
+      "status": "response",
+      "prompt_tokens": 790,
+      "completion_tokens": 280,
+      "recorded_at": "2026-11-01T01:05:24.499598+08:00"
+    },
+    {
+      "reservation_id": "4ef22cf1-f26e-4194-829e-63a0923c44c0",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2648,
+      "status": "response",
+      "prompt_tokens": 630,
+      "completion_tokens": 326,
+      "recorded_at": "2026-11-01T01:05:27.162761+08:00"
+    },
+    {
+      "reservation_id": "5568ff4d-89dc-4bd6-8657-1746714bb087",
+      "model": "deepseek-flash",
+      "elapsed_ms": 1276,
+      "status": "response",
+      "prompt_tokens": 632,
+      "completion_tokens": 43,
+      "recorded_at": "2026-11-01T01:05:28.457900+08:00"
+    },
+    {
+      "reservation_id": "89fb1450-ac0e-4727-b39c-2a552006a46c",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2066,
+      "status": "response",
+      "prompt_tokens": 697,
+      "completion_tokens": 197,
+      "recorded_at": "2026-11-01T01:05:30.534952+08:00"
+    },
+    {
+      "reservation_id": "88925902-f2eb-441e-8878-8c2ff032e117",
+      "model": "deepseek-flash",
+      "elapsed_ms": 885,
+      "status": "response",
+      "prompt_tokens": 634,
+      "completion_tokens": 27,
+      "recorded_at": "2026-11-01T01:05:31.447598+08:00"
+    },
+    {
+      "reservation_id": "079a3887-e6e8-488c-b8ad-f6083cd87ef2",
+      "model": "deepseek-flash",
+      "elapsed_ms": 3101,
+      "status": "response",
+      "prompt_tokens": 683,
+      "completion_tokens": 362,
+      "recorded_at": "2026-11-01T01:05:34.559685+08:00"
+    },
+    {
+      "reservation_id": "d861c56e-a4a7-486a-8fca-fea72139f3b4",
+      "model": "deepseek-flash",
+      "elapsed_ms": 806,
+      "status": "response",
+      "prompt_tokens": 683,
+      "completion_tokens": 20,
+      "recorded_at": "2026-11-01T01:05:35.370071+08:00"
+    },
+    {
+      "reservation_id": "d66d6038-7cd2-4198-8947-bb97481a90fe",
+      "model": "deepseek-flash",
+      "elapsed_ms": 2779,
+      "status": "response",
+      "prompt_tokens": 750,
+      "completion_tokens": 355,
+      "recorded_at": "2026-11-01T01:05:38.161765+08:00"
+    },
+    {
+      "reservation_id": "b8d385d6-cb5b-4e4c-8f8f-c159317b7fbe",
+      "model": "deepseek-flash",
+      "elapsed_ms": 3224,
+      "status": "response",
+      "prompt_tokens": 750,
+      "completion_tokens": 400,
+      "recorded_at": "2026-11-01T01:05:41.389294+08:00"
+    }
+  ]
+}
