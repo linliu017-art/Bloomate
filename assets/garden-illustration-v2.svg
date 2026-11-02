@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+<title id="title">一座属于你的花园</title><desc id="desc">同一片草地上生长着白色雏菊、黄色向日葵和粉色郁金香。</desc>
+<rect width="1200" height="430" rx="20" fill="#f3ece1"/>
+<path d="M0 342 C170 312 330 358 510 342 S850 307 1200 344 V430 H0Z" fill="#e2e7d4"/>
+<circle cx="220" cy="183" r="102" fill="#e9ead8"/><circle cx="602" cy="183" r="116" fill="#e9ead8"/><circle cx="981" cy="183" r="102" fill="#e9ead8"/>
+<!-- daisy -->
+<g stroke="#7c9470" stroke-width="7" stroke-linecap="round" fill="none"><path d="M220 337 Q222 245 220 188"/><path d="M220 295 Q177 292 173 263 Q204 264 220 286" fill="#9caf8b"/><path d="M220 281 Q254 269 257 242 Q231 248 220 273" fill="#a9b99b"/></g>
+<g transform="translate(220 168)" fill="#fcf8ee"><ellipse cy="-30" rx="10" ry="26"/><ellipse cy="30" rx="10" ry="26"/><ellipse cx="30" rx="26" ry="10"/><ellipse cx="-30" rx="26" ry="10"/><ellipse transform="rotate(45)" cy="-30" rx="10" ry="26"/><ellipse transform="rotate(45)" cy="30" rx="10" ry="26"/><ellipse transform="rotate(-45)" cy="-30" rx="10" ry="26"/><ellipse transform="rotate(-45)" cy="30" rx="10" ry="26"/><circle r="17" fill="#d9ae5d"/></g>
+<!-- sunflower -->
+<g stroke="#7c9470" stroke-width="8" stroke-linecap="round" fill="none"><path d="M602 339 Q606 250 602 165"/><path d="M603 285 Q553 280 548 247 Q584 249 603 277" fill="#96ab83"/><path d="M604 260 Q646 250 650 218 Q619 225 604 251" fill="#a5b795"/></g>
+<g transform="translate(602 143)" fill="#ddb45e"><ellipse cy="-40" rx="12" ry="30"/><ellipse cy="40" rx="12" ry="30"/><ellipse cx="40" rx="30" ry="12"/><ellipse cx="-40" rx="30" ry="12"/><ellipse transform="rotate(30)" cy="-40" rx="12" ry="30"/><ellipse transform="rotate(30)" cy="40" rx="12" ry="30"/><ellipse transform="rotate(60)" cy="-40" rx="12" ry="30"/><ellipse transform="rotate(60)" cy="40" rx="12" ry="30"/><ellipse transform="rotate(-30)" cy="-40" rx="12" ry="30"/><ellipse transform="rotate(-30)" cy="40" rx="12" ry="30"/><ellipse transform="rotate(-60)" cy="-40" rx="12" ry="30"/><ellipse transform="rotate(-60)" cy="40" rx="12" ry="30"/><circle r="25" fill="#866542"/></g>
+<!-- tulip -->
+<g stroke="#7c9470" stroke-width="7" stroke-linecap="round" fill="none"><path d="M981 338 Q983 245 981 174"/><path d="M982 306 Q943 291 938 248 Q966 261 982 295" fill="#9caf8b"/><path d="M982 293 Q1018 275 1023 235 Q994 251 982 282" fill="#a9b99b"/></g>
+<path d="M981 192 C949 187 937 163 941 129 C954 132 964 143 971 152 C975 137 978 126 981 121 C986 128 990 140 993 152 C1003 139 1014 132 1023 129 C1026 164 1013 187 981 192Z" fill="#d9a19a"/>
+<g text-anchor="middle" font-family="PingFang SC,Microsoft YaHei,sans-serif" fill="#576b50" font-size="19"><text x="220" y="392">雏菊</text><text x="602" y="392">向日葵</text><text x="981" y="392">郁金香</text></g>
+</svg>
