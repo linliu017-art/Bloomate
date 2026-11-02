@@ -243,7 +243,7 @@ def test_expired_habit_awaits_review_without_auto_achievement(client, monkeypatc
     client.put(base+'/pause',json={'paused':True});pause=client.get(base+'/pause').json()
     assert pause['threshold']==1 and pause['completed']==1 and pause['future_dates']==['2026-11-04','2026-11-05']
     clock[0]=date(2026,11,6);assert client.get(base+'/habit-stage').json()['stage']['status']=='review_due'
-    assert client.get(base+'/growth').json()['achieved'] is False
+    assert client.get(base+'/growth').json()['achieved'] is True
 
 
 def test_schedule_preview_includes_standard_without_changing_it(client, monkeypatch):
@@ -255,6 +255,59 @@ def test_schedule_preview_includes_standard_without_changing_it(client, monkeypa
     proposal=client.post(base+'/habit-schedule-proposals',json={'end_date':'2026-11-18','weekdays':[0,2,4]}).json()
     assert proposal['after']['threshold']==5 and proposal['after']['completed']==1
     assert client.get(base+'/growth').json()['threshold']==5
+
+
+def test_future_habit_can_start_today_only_after_confirm(client, monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,10))
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'阅读','availability':'十分钟'}).json()['id'];plant=client.post('/api/v1/proposals/'+job+'/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    config={'start_date':'2026-11-12','end_date':'2026-11-20','timezone':'Asia/Shanghai','weekdays':list(range(7)),'completion_standard':'读满十分钟'}
+    client.post(base+'/habit-stage',json=config).raise_for_status();original=client.get(base+'/habit-stage').json()
+    assert original['stage']['status']=='upcoming' and not original['occurrences']
+    response=client.post(base+'/habit-schedule-proposals',json={'start_date':'2026-11-10','end_date':'2026-11-20','weekdays':list(range(7))});assert response.status_code==201
+    proposal=response.json();assert proposal['after']['includes_today'] and proposal['before']['start_date']=='2026-11-12'
+    assert client.get(base+'/habit-stage').json()==original
+    assert client.post('/api/v1/habit-schedule-proposals/'+proposal['id']+'/confirm').status_code==200
+    stage=client.get(base+'/habit-stage').json();assert stage['stage']['status']=='active' and stage['occurrences'][0]['date']=='2026-11-10'
+    assert client.put(base+'/habit-occurrences/2026-11-10',json={'completed':True,'performed':True}).status_code==200
+    assert client.post(base+'/habit-schedule-proposals',json={'start_date':'2026-11-11','end_date':'2026-11-20','weekdays':list(range(7))}).json()['error']['code']=='START_LOCKED'
+    main.init_db();assert client.get(base+'/habit-stage').json()['occurrences'][0]['completed']
+
+
+def test_future_habit_later_start_removes_only_unstarted_days(client, monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,10))
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'阅读','availability':'十分钟'}).json()['id'];plant=client.post('/api/v1/proposals/'+job+'/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    client.post(base+'/habit-stage',json={'start_date':'2026-11-12','end_date':'2026-11-20','timezone':'Asia/Shanghai','weekdays':list(range(7)),'completion_standard':'读十分钟'})
+    r=client.post(base+'/habit-schedule-proposals',json={'start_date':'2026-11-15','end_date':'2026-11-20','weekdays':list(range(7))});r.raise_for_status();assert r.json()['after']['future_count']==6
+    client.post('/api/v1/habit-schedule-proposals/'+r.json()['id']+'/confirm').raise_for_status()
+    with main.connect() as db:
+        dates={x['action_date']:x['enabled'] for x in db.execute('select action_date,enabled from habit_occurrences')}
+        assert dates['2026-11-12']==0 and dates['2026-11-14']==0 and dates['2026-11-15']==1
+
+
+def test_future_start_proposal_rejected_after_day_changes(client, monkeypatch):
+    from datetime import date
+    clock=[date(2026,11,10)];monkeypatch.setattr(main,'habit_today',lambda _:clock[0])
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'阅读','availability':'十分钟'}).json()['id'];plant=client.post('/api/v1/proposals/'+job+'/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    client.post(base+'/habit-stage',json={'start_date':'2026-11-12','end_date':'2026-11-20','timezone':'Asia/Shanghai','weekdays':list(range(7)),'completion_standard':'读十分钟'})
+    pid=client.post(base+'/habit-schedule-proposals',json={'start_date':'2026-11-10','end_date':'2026-11-20','weekdays':list(range(7))}).json()['id'];clock[0]=date(2026,11,11)
+    assert client.post('/api/v1/habit-schedule-proposals/'+pid+'/confirm').json()['error']['code']=='PLAN_CHANGED'
+    assert client.get(base+'/habit-stage').json()['stage']['start_date']=='2026-11-12'
+
+
+def test_legacy_schedule_proposal_still_confirms_when_unchanged(client, monkeypatch):
+    import json
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,10))
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'阅读','availability':'十分钟'}).json()['id'];plant=client.post('/api/v1/proposals/'+job+'/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    stage_id=client.post(base+'/habit-stage',json={'start_date':'2026-11-12','end_date':'2026-11-20','timezone':'Asia/Shanghai','weekdays':list(range(7)),'completion_standard':'读十分钟'}).json()['id']
+    with main.connect() as db:
+        stage=db.execute('select * from habit_stages where id=?',(stage_id,)).fetchone();old_hash=main.habit_schedule_hash(db,stage,include_start=False)
+        before={'end_date':'2026-11-20','weekdays':list(range(7))};after={'end_date':'2026-11-18','weekdays':[0,2,4],'effective_date':'2026-11-12','future_count':3}
+        db.execute('insert into habit_schedule_proposals values (?,?,?,?,?,?,?,?)',('legacy',main.OWNER,plant,stage_id,old_hash,json.dumps(before),json.dumps(after),'pending'))
+    assert client.post('/api/v1/habit-schedule-proposals/legacy/confirm').status_code==200
+    stage=client.get(base+'/habit-stage').json()['stage'];assert stage['start_date']=='2026-11-12' and stage['end_date']=='2026-11-18'
 
 
 def test_pause_and_resume_preserves_history_and_suppresses_pause_days(client, monkeypatch):
@@ -718,3 +771,460 @@ def test_does_not_reask_explicit_goal_duration():
     assert asks_known_duration('分享的总时长和书目是否已确定？',{'goal':'准备3分钟英文分享'})
     assert not asks_known_duration('你希望哪天完成？',{'goal':'准备3分钟英文分享'})
     assert not asks_known_duration('分享的总时长是否确定？',{'goal':'准备英文分享'})
+
+
+def test_goal_collection_requires_completed_steps_and_keeps_snapshot(client, monkeypatch):
+    job=client.post('/api/v1/plans',json={'kind':'goal','goal':'完成计划','availability':'每天十分钟'}).json()['id']
+    plan={'title':'完成计划','summary':'测试计划','steps':['第一步','第二步'],'growth_nodes':[10,40,70,85]}
+    plant=client.post(f'/api/v1/proposals/{job}/confirm',json=plan).json()['id']
+    base=f'/api/v1/plants/{plant}'
+    assert client.get(base+'/collection').json()['collection'] is None
+    assert client.post(base+'/collection',json={'outcome':'做到了'}).status_code==409
+    for n in (0,1): assert client.put(f'{base}/actions/{n}',json={'completed':True}).status_code==200
+    first=client.post(base+'/collection',json={'outcome':'做到了'});assert first.status_code==200
+    assert client.post(base+'/collection',json={'outcome':'别的内容'}).json()==first.json()
+    main.init_db()
+    saved=client.get(base+'/collection').json()['collection']
+    assert saved['plan']==plan and saved['outcome']=='做到了'
+    client.put(base+'/actions/0',json={'completed':False})
+    assert client.get(base+'/collection').json()['collection']==saved
+    monkeypatch.setattr(main,'OWNER','another')
+    assert client.get(base+'/collection').status_code==404
+
+
+def test_growth_nodes_validate_and_store_with_plan(client):
+    job=client.post('/api/v1/plans',json={'kind':'goal','goal':'准备计划','availability':'每天十分钟'}).json()['id']
+    plan={'title':'准备计划','summary':'测试','steps':['第一步'],'growth_nodes':[10,40,30,80]}
+    assert client.post(f'/api/v1/proposals/{job}/confirm',json=plan).status_code==422
+    plan['growth_nodes']=[10,30,60,90]
+    plant=client.post(f'/api/v1/proposals/{job}/confirm',json=plan).json()['id']
+    assert client.get('/api/v1/garden').json()['plants'][0]['plan']['growth_nodes']==[10,30,60,90]
+    assert plant
+
+
+def test_habit_cycle_confirms_threshold_together(client):
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'阅读习惯','availability':'十分钟'}).json()['id']
+    plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    stage={'start_date':'2026-11-02','end_date':'2026-11-08','timezone':'Asia/Shanghai','weekdays':[0,1,2,3,4,5,6],'completion_standard':'阅读','growth_threshold':8}
+    assert client.post(base+'/habit-stage',json=stage).status_code==422
+    assert client.get(base+'/habit-stage').json()['stage'] is None
+    stage['growth_threshold']=5
+    assert client.post(base+'/habit-stage',json=stage).status_code==201
+    assert client.get(base+'/growth').json()['threshold']==5
+    main.init_db()
+    assert client.get(base+'/growth').json()['threshold']==5
+
+
+def test_flower_choice_persists_and_snapshot_keeps_species(client, monkeypatch):
+    job=client.post('/api/v1/plans',json={'kind':'goal','goal':'完成项目','availability':'十分钟'}).json()['id']
+    plan={'title':'完成项目','summary':'测试','steps':['一步'],'flower_species':'daisy','flower_reason':'留住耐心'}
+    plant=client.post(f'/api/v1/proposals/{job}/confirm',json=plan).json()['id'];base=f'/api/v1/plants/{plant}'
+    assert client.put(base+'/flower',json={'species':'tulip'}).status_code==409
+    client.put(base+'/actions/0',json={'completed':True})
+    assert client.post(base+'/collection',json={'outcome':'完成'}).status_code==200
+    main.init_db()
+    assert client.get(base+'/collection').json()['collection']['plan']['flower_species']=='daisy'
+    assert client.put(base+'/flower',json={'species':'daisy'}).status_code==200
+    monkeypatch.setattr(main,'OWNER','another')
+    assert client.put(base+'/flower',json={'species':'daisy'}).status_code==404
+
+
+def test_existing_flower_selection_requires_explicit_choice(client):
+    job=client.post('/api/v1/plans',json={'kind':'goal','goal':'测试旧植物','availability':'十分钟'}).json()['id']
+    plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    assert not client.get('/api/v1/garden').json()['plants'][0]['plan'].get('flower_species')
+    assert client.put(base+'/flower',json={'species':'unknown'}).status_code==422
+    assert client.put(base+'/flower',json={'species':'tulip'}).json()['species']=='tulip'
+    main.init_db()
+    assert client.get('/api/v1/garden').json()['plants'][0]['plan']['flower_species']=='tulip'
+
+
+def test_habit_stage_collection_next_stage_and_restart(client,monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,2))
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'阅读习惯','availability':'每天十分钟'}).json()['id']
+    plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    first={'start_date':'2026-11-02','end_date':'2026-11-02','timezone':'Asia/Shanghai','weekdays':[0],'completion_standard':'读十分钟','growth_threshold':1}
+    assert client.post(base+'/habit-stage',json=first).status_code==201
+    assert client.put(base+'/habit-occurrences/2026-11-02',json={'completed':True,'performed':True}).status_code==200
+    assert client.post(base+'/growth/confirm').status_code==200
+    assert client.post(base+'/growth/confirm').status_code==200
+    assert len(client.get(base+'/habit-stages').json()['collections'])==1
+    assert client.post(base+'/habit-end').json()['ended']
+    assert client.get('/api/v1/today').json()['habits_today']==[]
+    second={'start_date':'2026-11-03','end_date':'2026-11-09','timezone':'Asia/Shanghai','weekdays':[0,1,2,3,4,5,6],'completion_standard':'读十分钟','growth_threshold':4}
+    p=client.post(base+'/next-stage-proposals',json=second);assert p.status_code==201
+    assert client.get(base+'/habit-stage').json()['stage']['start_date']=='2026-11-02'
+    proposal=p.json()['id'];a=client.post(f'/api/v1/habit-next-proposals/{proposal}/confirm');assert a.status_code==200
+    assert client.post(f'/api/v1/habit-next-proposals/{proposal}/confirm').json()==a.json()
+    assert client.get(base+'/habit-stage').json()['stage']['start_date']=='2026-11-03'
+    assert client.get(base+'/growth').json()['threshold']==4
+    main.init_db()
+    result=client.get(base+'/habit-stages').json();assert len(result['collections'])==1 and not result['ended']
+    assert client.put(base+'/habit-occurrences/2026-11-02',json={'completed':False,'performed':False}).status_code==404
+    old_stage=result['collections'][0]['stage_id']
+    assert client.put(f'/api/v1/habit-stages/{old_stage}/occurrences/2026-11-02',json={'completed':False,'performed':False}).status_code==200
+    changed=client.get(base+'/habit-stages').json()['collections'][0]
+    assert changed['changed'] and changed['snapshot']['completed']==1 and not changed['current_entries'][0]['completed']
+    monkeypatch.setattr(main,'OWNER','someone-else');assert client.get(base+'/habit-stages').status_code==404
+
+
+def test_discarded_next_stage_never_commits(client,monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,2))
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'每日练习','availability':'十分钟'}).json()['id'];plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    stage={'start_date':'2026-11-02','end_date':'2026-11-02','timezone':'Asia/Shanghai','weekdays':[0],'completion_standard':'练习','growth_threshold':1}
+    client.post(base+'/habit-stage',json=stage);client.put(base+'/habit-occurrences/2026-11-02',json={'completed':True,'performed':True});client.post(base+'/growth/confirm')
+    stage.update(start_date='2026-11-03',end_date='2026-11-03',weekdays=[1]);p=client.post(base+'/next-stage-proposals',json=stage).json()['id']
+    assert client.post(f'/api/v1/habit-next-proposals/{p}/discard').status_code==200
+    assert client.post(f'/api/v1/habit-next-proposals/{p}/confirm').status_code==409
+
+
+def test_memory_requires_opt_in_and_is_removed_from_later_model_calls(client,monkeypatch):
+    assert client.get('/api/v1/memory').json()=={'enabled':False,'items':[]}
+    assert client.post('/api/v1/memory/items',json={'content':'偏好简短计划'}).status_code==409
+    assert client.put('/api/v1/memory/preference',json={'enabled':True}).status_code==200
+    saved=client.post('/api/v1/memory/items',json={'content':'偏好简短计划'});assert saved.status_code==201
+    memory_id=saved.json()['id'];seen=[]
+    class Response:
+        def raise_for_status(self):pass
+        def json(self):return {'choices':[{'message':{'content':'{"question":null,"plan":{"title":"计划","summary":"测试","steps":["一步"]}}'}}]}
+    def fake_post(_url,**kwargs):seen.append(json.loads(kwargs['json']['messages'][1]['content']));return Response()
+    import json
+    monkeypatch.setenv('BLOOMATE_TEST_MODEL','0');monkeypatch.setenv('MODEL_ENABLED','1');monkeypatch.setenv('MODEL_API_KEY','fake');monkeypatch.setenv('MODEL_BASE_URL','https://example.invalid');monkeypatch.setenv('MODEL_NAME','test');monkeypatch.setenv('MODEL_CALL_RESERVE_CENTS','1');monkeypatch.setattr(main.httpx,'post',fake_post)
+    data={'kind':'goal','goal':'整理书桌','availability':'十分钟'}
+    main.generate(data);assert seen[-1]['_confirmed_preferences']==['偏好简短计划']
+    assert client.put(f'/api/v1/memory/items/{memory_id}',json={'content':'更喜欢慢一点'}).status_code==200
+    main.init_db();assert client.get('/api/v1/memory').json()['items'][0]['content']=='更喜欢慢一点'
+    assert client.put('/api/v1/memory/preference',json={'enabled':False}).status_code==200
+    main.generate(data);assert '_confirmed_preferences' not in seen[-1]
+    assert client.put(f'/api/v1/memory/items/{memory_id}',json={'content':'不应保存'}).status_code==409
+    monkeypatch.setattr(main,'OWNER','other');assert client.get('/api/v1/memory').json()=={'enabled':False,'items':[]}
+    assert client.delete(f'/api/v1/memory/items/{memory_id}').status_code==404
+    monkeypatch.setattr(main,'OWNER','local-user');assert client.delete(f'/api/v1/memory/items/{memory_id}').status_code==200
+    assert client.get('/api/v1/memory').json()['items']==[]
+
+
+def test_gardener_care_deduplicates_respects_pause_and_can_be_disabled(client,monkeypatch):
+    from datetime import datetime,date
+    from zoneinfo import ZoneInfo
+    zone=ZoneInfo('Asia/Shanghai');clock=[datetime(2026,11,3,12,tzinfo=zone)]
+    monkeypatch.setattr(main,'care_now',lambda:clock[0]);monkeypatch.setattr(main,'habit_today',lambda _:clock[0].date())
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'照顾植物的习惯','availability':'十分钟'}).json()['id'];plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    config={'start_date':'2026-11-01','end_date':'2026-11-06','timezone':'Asia/Shanghai','weekdays':list(range(7)),'completion_standard':'练习'}
+    client.post(base+'/habit-stage',json=config)
+    assert client.post('/api/v1/care/refresh').json()['created']==1
+    assert client.post('/api/v1/care/refresh').json()['created']==0
+    messages=client.get('/api/v1/care').json()['messages'];assert len(messages)==1
+    assert client.post('/api/v1/care/'+messages[0]['id']+'/dismiss').status_code==200
+    assert client.post('/api/v1/care/refresh').json()['created']==0
+    clock[0]=datetime(2026,11,6,12,tzinfo=zone)
+    assert client.post('/api/v1/care/refresh').json()['created']==0
+    clock[0]=datetime(2026,11,11,12,tzinfo=zone)
+    assert client.post('/api/v1/care/refresh').json()['created']==1
+    assert client.put('/api/v1/care/preference',json={'enabled':False}).status_code==200
+    assert client.get('/api/v1/care').json()=={'enabled':False,'messages':[]}
+    assert client.post('/api/v1/care/refresh').json()['created']==0
+    main.init_db();assert client.get('/api/v1/care').json()['enabled'] is False
+    monkeypatch.setattr(main,'OWNER','other');assert client.post('/api/v1/care/'+messages[0]['id']+'/dismiss').status_code==404
+
+
+def test_care_requires_two_missed_scheduled_actions_not_future_or_paused(client,monkeypatch):
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    now=datetime(2026,11,4,12,tzinfo=ZoneInfo('Asia/Shanghai'));monkeypatch.setattr(main,'care_now',lambda:now);monkeypatch.setattr(main,'habit_today',lambda _:now.date())
+    job=client.post('/api/v1/plans',json={'kind':'goal','goal':'整理桌面','availability':'十分钟'}).json()['id']
+    plan={'title':'整理桌面','summary':'测试','steps':['整理一','整理二','整理三']};plant=client.post(f'/api/v1/proposals/{job}/confirm',json=plan).json()['id'];base=f'/api/v1/plants/{plant}'
+    client.put(base+'/actions/0/date',json={'due_date':'2026-11-01'});client.put(base+'/actions/1/date',json={'due_date':'2026-11-02'});client.put(base+'/actions/2/date',json={'due_date':'2026-11-04'})
+    client.put(base+'/actions/1',json={'completed':True});assert client.post('/api/v1/care/refresh').json()['created']==0
+    client.put(base+'/actions/1',json={'completed':False});client.put(base+'/pause',json={'paused':True});assert client.post('/api/v1/care/refresh').json()['created']==0
+    client.put(base+'/pause',json={'paused':False});assert client.post('/api/v1/care/refresh').json()['created']==1
+    assert client.get(base+'/actions').json()['actions'][0]['completed'] is False
+
+
+def test_confirmed_habit_remains_collectible_and_can_continue_after_correction(client,monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,2))
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'虚构复盘习惯','availability':'十分钟'}).json()['id'];plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    config={'start_date':'2026-11-02','end_date':'2026-11-02','timezone':'Asia/Shanghai','weekdays':[0],'completion_standard':'读十分钟','growth_threshold':1}
+    client.post(base+'/habit-stage',json=config);client.put(base+'/habit-occurrences/2026-11-02',json={'completed':True,'performed':True});client.post(base+'/growth/confirm')
+    client.put(base+'/habit-occurrences/2026-11-02',json={'completed':False,'performed':False})
+    assert client.get(base+'/habit-stages').json()['collections'][0]['changed']
+    config.update(start_date='2026-11-03',end_date='2026-11-03',weekdays=[1]);proposal=client.post(base+'/next-stage-proposals',json=config)
+    assert proposal.status_code==201
+    assert client.post('/api/v1/habit-next-proposals/'+proposal.json()['id']+'/confirm').status_code==200
+    assert len(client.get(base+'/habit-stages').json()['collections'])==1
+
+
+def test_one_day_habit_schedule_precedes_generation_and_is_saved_atomically(client,monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,2))
+    schedule={'start_date':'2026-11-02','end_date':'2026-11-02','timezone':'Asia/Shanghai','weekdays':[0,1,2,3,4,5,6],'completion_standard':'阅读十分钟','growth_threshold':1}
+    response=client.post('/api/v1/plans',json={'kind':'habit','goal':'测试一天阅读','availability':'十分钟','session_budget_minutes':10,'habit_completion_minutes':10,'habit_schedule':schedule})
+    assert response.status_code==202
+    job=response.json()['id'];state=client.get('/api/v1/plans/'+job).json()
+    assert state['constraints']['habit_schedule']==schedule and state['kind']=='habit'
+    assert client.get('/api/v1/garden').json()['plants']==[]
+    first=client.post('/api/v1/proposals/'+job+'/confirm');assert first.status_code==200
+    assert client.post('/api/v1/proposals/'+job+'/confirm').json()['id']==first.json()['id']
+    base='/api/v1/plants/'+first.json()['id'];stage=client.get(base+'/habit-stage').json()
+    assert stage['stage']['start_date']==stage['stage']['end_date']=='2026-11-02' and len(stage['occurrences'])==1
+    assert client.get(base+'/growth').json()['threshold']==1
+    assert client.put(base+'/habit-occurrences/2026-11-02',json={'completed':True,'performed':True}).status_code==200
+    assert client.get(base+'/growth').json()['eligible'] and client.get(base+'/growth').json()['achieved']
+    assert client.get(base+'/completion-notice').json()['status']=='pending'
+    assert client.post(base+'/growth/confirm').json()['achieved'] is True
+    main.init_db();assert client.get(base+'/habit-stage').json()['stage']['end_date']=='2026-11-02'
+
+
+def test_habit_schedule_rejects_invalid_and_out_of_range_plan(client):
+    schedule={'start_date':'2026-11-02','end_date':'2026-11-02','timezone':'Asia/Shanghai','weekdays':[0],'completion_standard':'阅读','growth_threshold':2}
+    payload={'kind':'habit','goal':'一天阅读','availability':'十分钟','habit_schedule':schedule}
+    assert client.post('/api/v1/plans',json=payload).status_code==422
+    schedule['growth_threshold']=1;job=client.post('/api/v1/plans',json=payload).json()['id']
+    plan={'title':'阅读','summary':'四周习惯计划','steps':['第1天阅读','第2天阅读']}
+    rejected=client.post('/api/v1/proposals/'+job+'/confirm',json=plan)
+    assert rejected.status_code==409 and rejected.json()['error']['code']=='PLAN_CONSTRAINT'
+    assert client.get('/api/v1/garden').json()['plants']==[]
+
+
+def test_existing_habit_plan_revision_requires_confirmation_and_preserves_data(client,monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,2))
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'虚构阅读','availability':'十分钟'}).json()['id']
+    original={'title':'阅读','summary':'四周习惯计划','steps':['第1周阅读','第2周阅读'],'flower_species':'daisy'}
+    plant=client.post('/api/v1/proposals/'+job+'/confirm',json=original).json()['id'];base='/api/v1/plants/'+plant
+    stage={'start_date':'2026-11-02','end_date':'2026-11-02','timezone':'Asia/Shanghai','weekdays':[0],'completion_standard':'阅读十分钟','growth_threshold':1}
+    client.post(base+'/habit-stage',json=stage);client.put(base+'/habit-occurrences/2026-11-02',json={'completed':True,'performed':True})
+    before=client.get(base+'/habit-stage').json();r=client.post(base+'/habit-plan-revisions');assert r.status_code==202
+    revision=r.json()['id'];draft=client.get('/api/v1/habit-plan-revisions/'+revision).json();assert draft['status']=='done' and draft['before']==original
+    assert client.get('/api/v1/garden').json()['plants'][0]['plan']==original
+    main.init_db();assert client.get('/api/v1/habit-plan-revisions/'+revision).json()['status']=='done'
+    assert client.post('/api/v1/habit-plan-revisions/'+revision+'/confirm').status_code==200
+    assert client.post('/api/v1/habit-plan-revisions/'+revision+'/confirm').status_code==200
+    updated=client.get('/api/v1/garden').json()['plants'][0]['plan']
+    assert updated['summary']=='测试提案' and updated['flower_species']=='daisy' and client.get(base+'/habit-stage').json()==before
+    monkeypatch.setattr(main,'OWNER','someone-else');assert client.get('/api/v1/habit-plan-revisions/'+revision).status_code==404
+
+
+def test_existing_habit_revision_rejects_stale_and_discarded(client,monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,2))
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'虚构练习','availability':'十分钟'}).json()['id'];plant=client.post('/api/v1/proposals/'+job+'/confirm').json()['id'];base='/api/v1/plants/'+plant
+    stage={'start_date':'2026-11-02','end_date':'2026-11-02','timezone':'Asia/Shanghai','weekdays':[0],'completion_standard':'练习','growth_threshold':1};client.post(base+'/habit-stage',json=stage)
+    revision=client.post(base+'/habit-plan-revisions').json()['id'];client.put(base+'/habit-occurrences/2026-11-02',json={'completed':True,'performed':True})
+    assert client.post('/api/v1/habit-plan-revisions/'+revision+'/confirm').json()['error']['code']=='PLAN_CHANGED'
+    assert client.post('/api/v1/habit-plan-revisions/'+revision+'/discard').json()['status']=='discarded'
+    assert client.post('/api/v1/habit-plan-revisions/'+revision+'/confirm').status_code==409
+
+
+def test_completion_notice_and_goal_followup_persist(client):
+    job=client.post('/api/v1/plans',json={'kind':'goal','goal':'完成简历','availability':'十分钟'}).json()['id']
+    plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    steps=client.get(base+'/actions').json()['actions']
+    for step in steps:
+        result=client.put(base+f"/actions/{step['index']}",json={'completed':True}).json()
+    assert result['stage_completed'] is True
+    assert client.get(base+'/collection').json()['collection'] is not None
+    assert client.get(base+'/completion-notice').json()['status']=='pending'
+    main.init_db();assert client.get(base+'/completion-notice').json()['status']=='pending'
+    assert client.post(base+'/completion-notice',json={'choice':'continue'}).json()['status']=='continue'
+    p=client.post(base+'/goal-next-proposals',json={'title':'优化简历','steps':['补充项目经历','请朋友检查']}).json()
+    assert client.get(base+'/goal-stages').json()['stages']==[]
+    c=client.post('/api/v1/goal-next-proposals/'+p['id']+'/confirm').json()
+    assert client.post('/api/v1/goal-next-proposals/'+p['id']+'/confirm').json()==c
+    stage=c['stage_id'];assert client.get(base+'/growth').json()['counts']=={'completed':0,'total':2}
+    assert len(client.get('/api/v1/today').json()['goals_unscheduled'])==2
+    assert not client.put(f'/api/v1/goal-stages/{stage}/actions/0',json={'completed':True}).json()['stage_completed']
+    assert client.put(f'/api/v1/goal-stages/{stage}/actions/1',json={'completed':True}).json()['stage_completed']
+    assert client.get(base+'/completion-notice').json()['status']=='pending'
+    main.init_db();assert client.get(base+'/goal-stages').json()['stages'][0]['completed_at']
+    assert client.get(base+'/collection').json()['collection'] is not None
+
+
+def test_habit_completion_choice_preserves_collection(client,monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,2))
+    schedule={'start_date':'2026-11-02','end_date':'2026-11-02','timezone':'Asia/Shanghai','weekdays':[0],'completion_standard':'阅读','growth_threshold':1}
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'阅读','availability':'十分钟','habit_schedule':schedule}).json()['id']
+    plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    path=base+'/habit-occurrences/2026-11-02'
+    assert client.put(path,json={'completed':True,'performed':True}).json()['stage_completed']
+    assert not client.put(path,json={'completed':True,'performed':True}).json()['stage_completed']
+    main.init_db();assert client.get(base+'/completion-notice').json()['status']=='pending'
+    assert client.post(base+'/completion-notice',json={'choice':'finish'}).json()['status']=='finished'
+    assert client.get(base+'/habit-stages').json()['ended']
+    assert len(client.get(base+'/habit-stages').json()['collections'])==1
+    assert client.put(path,json={'completed':False,'performed':False}).status_code==200
+    assert client.get(base+'/habit-stages').json()['collections'][0]['changed']
+
+
+def test_goal_followup_dates_today_overdue_clear_and_restore(client,monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,3))
+    job=client.post('/api/v1/plans',json={'kind':'goal','goal':'简历','availability':'十分钟'}).json()['id']
+    plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    for action in client.get(base+'/actions').json()['actions']:
+        assert client.put(base+f"/actions/{action['index']}",json={'completed':True}).status_code==200
+    original=client.get(base+'/collection').json()['collection']
+    draft=client.post(base+'/goal-next-proposals',json={'title':'优化简历','steps':['完善经历','请朋友检查','调整格式']}).json()['id']
+    stage=client.post(f'/api/v1/goal-next-proposals/{draft}/confirm').json()['stage_id']
+    datepath=f'/api/v1/goal-stages/{stage}/actions/{{}}/date'
+    assert client.get(base+'/goal-stages').json()['stages'][0]['dates']==[None,None,None]
+    assert client.put(datepath.format(0),json={'due_date':'2026-11-03'}).json()['due_date']=='2026-11-03'
+    assert client.put(datepath.format(1),json={'due_date':'2026-11-02'}).status_code==200
+    today=client.get('/api/v1/today').json()
+    assert [a['text'] for a in today['goals_today']]==['完善经历']
+    assert [a['text'] for a in today['goals_overdue']]==['请朋友检查']
+    assert [a['text'] for a in today['goals_unscheduled']]==['调整格式']
+    main.init_db()
+    assert client.get(base+'/goal-stages').json()['stages'][0]['dates']==['2026-11-03','2026-11-02',None]
+    assert client.put(datepath.format(0),json={'due_date':'2026-11-05'}).status_code==200
+    assert client.put(datepath.format(1),json={'due_date':None}).status_code==200
+    today=client.get('/api/v1/today').json()
+    assert not today['goals_today'] and not today['goals_overdue']
+    assert [a['text'] for a in today['goals_unscheduled']]==['请朋友检查','调整格式']
+    assert client.put(datepath.format(0),json={'due_date':'invalid'}).status_code==422
+    assert client.put(datepath.format(9),json={'due_date':'2026-11-03'}).status_code==404
+    assert client.get(base+'/collection').json()['collection']==original
+    assert client.put(f'/api/v1/goal-stages/{stage}/actions/1',json={'completed':True}).status_code==200
+    assert [a['text'] for a in client.get('/api/v1/today').json()['goals_unscheduled']]==['调整格式']
+    assert client.put(f'/api/v1/goal-stages/{stage}/actions/1',json={'completed':False}).status_code==200
+    assert len(client.get('/api/v1/today').json()['goals_unscheduled'])==2
+    client.put(base+'/pause',json={'paused':True})
+    assert not client.get('/api/v1/today').json()['goals_unscheduled']
+    monkeypatch.setattr(main,'OWNER','another')
+    assert client.put(datepath.format(0),json={'due_date':'2026-11-03'}).status_code==404
+
+
+def test_gardener_goal_followup_suggest_edit_and_confirm(client,monkeypatch):
+    job=client.post('/api/v1/plans',json={'kind':'goal','goal':'完成简历','background':'已有工作经历','availability':'每天二十分钟','session_budget_minutes':20}).json()['id']
+    plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    for action in client.get(base+'/actions').json()['actions']:
+        assert client.put(base+f"/actions/{action['index']}",json={'completed':True}).status_code==200
+    captured=[]
+    def gardener(data):
+        captured.append(data)
+        return main.Turn(plan=main.Plan(title='优化简历',summary='按自己的实际内容调整。',steps=['检查项目经历','检查格式'],session_actions=[main.SessionAction(text='检查项目经历',kind='core',minutes=20)]))
+    monkeypatch.setattr(main,'generate',gardener)
+    r=client.post(base+'/goal-next-generation',json={'title':'优化简历','details':'突出项目经历','duration_days':3,'daily_minutes':20})
+    assert r.status_code==202
+    gen=r.json()['id'];result=client.get('/api/v1/plans/'+gen).json()
+    assert result['status']=='done' and result['proposal']['steps']==['检查项目经历','检查格式']
+    assert captured[0]['_goal_followup'] and captured[0]['session_budget_minutes']==20
+    assert '已有工作经历' in captured[0]['background'] and '突出项目经历' in captured[0]['background']
+    assert client.post('/api/v1/proposals/'+gen+'/confirm').status_code==409
+    assert client.get(base+'/goal-stages').json()['stages']==[]
+    main.init_db();assert client.get('/api/v1/plans/'+gen).json()['proposal']['steps'][0]=='检查项目经历'
+    proposal=client.post(base+'/goal-next-proposals',json={'title':'优化简历','steps':['修改项目经历','让朋友检查'],'generation_id':gen})
+    assert proposal.status_code==201
+    assert client.post('/api/v1/goal-next-proposals/'+proposal.json()['id']+'/confirm').status_code==200
+    assert client.get(base+'/goal-stages').json()['stages'][0]['steps']==['修改项目经历','让朋友检查']
+    assert client.post(base+'/goal-next-proposals',json={'title':'旧建议','steps':['旧建议'],'generation_id':gen}).status_code==409
+    monkeypatch.setattr(main,'OWNER','other')
+    assert client.get('/api/v1/plans/'+gen).status_code==404
+    assert client.post(base+'/goal-next-generation',json={'title':'优化简历'}).status_code==404
+
+
+def test_gardener_followup_failure_does_not_change_plant(client,monkeypatch):
+    job=client.post('/api/v1/plans',json={'kind':'goal','goal':'完成简历','availability':'十分钟'}).json()['id']
+    plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    for action in client.get(base+'/actions').json()['actions']:
+        client.put(base+f"/actions/{action['index']}",json={'completed':True})
+    original=client.get(base+'/collection').json()['collection']
+    def fail(_data):raise RuntimeError('MODEL_FAILED')
+    monkeypatch.setattr(main,'generate',fail)
+    generation=client.post(base+'/goal-next-generation',json={'title':'优化简历'}).json()['id']
+    assert client.get('/api/v1/plans/'+generation).json()['error']['code']=='MODEL_FAILED'
+    assert client.get(base+'/goal-stages').json()['stages']==[]
+    assert client.get(base+'/collection').json()['collection']==original
+    assert client.post(base+'/goal-next-proposals',json={'title':'优化','steps':['步骤'],'generation_id':generation}).status_code==409
+
+
+def test_goal_followup_time_is_not_inherited(client,monkeypatch):
+    job=client.post('/api/v1/plans',json={'kind':'goal','goal':'完成简历','availability':'每天20分钟','session_budget_minutes':20}).json()['id']
+    plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    with main.connect() as db:
+        import json
+        plan=json.loads(db.execute('SELECT plan_json FROM plants WHERE id=?',(plant,)).fetchone()['plan_json']);plan['summary']='上一阶段为七天计划'
+        db.execute('UPDATE plants SET plan_json=? WHERE id=?',(json.dumps(plan,ensure_ascii=False),plant))
+    for a in client.get(base+'/actions').json()['actions']:client.put(base+f"/actions/{a['index']}",json={'completed':True})
+    seen=[]
+    def gardener(data):
+        seen.append(data)
+        actions=[main.SessionAction(text='检查简历',kind='core',minutes=10)] if data.get('session_budget_minutes') else None
+        return main.Turn(plan=main.Plan(title='优化简历',summary='先检查需要改进的内容。',steps=['检查简历'],session_actions=actions))
+    monkeypatch.setattr(main,'generate',gardener)
+    no_time=client.post(base+'/goal-next-generation',json={'title':'优化简历','duration_days':None,'daily_minutes':None})
+    assert no_time.status_code==202
+    first=client.get('/api/v1/plans/'+no_time.json()['id']).json()
+    assert first['status']=='done' and first['followup_time']=={'duration_days':None,'daily_minutes':None}
+    assert seen[0]['session_budget_minutes'] is None and seen[0]['followup_time']['duration_days'] is None
+    assert '不确定' in seen[0]['availability']
+    explicit=client.post(base+'/goal-next-generation',json={'title':'优化简历','duration_days':3,'daily_minutes':20})
+    assert explicit.status_code==202
+    second=client.get('/api/v1/plans/'+explicit.json()['id']).json()
+    assert second['status']=='done' and second['followup_time']=={'duration_days':3,'daily_minutes':20}
+    assert seen[1]['session_budget_minutes']==20
+    assert client.post(base+'/goal-next-generation',json={'title':'优化简历','duration_days':0,'daily_minutes':20}).status_code==422
+    too_long=main.Plan(title='优化',summary='优化',steps=['第4天：检查'],session_actions=[main.SessionAction(text='检查',kind='core',minutes=10)])
+    with pytest.raises(main.ConstraintError):main.validate_plan(too_long,seen[1])
+    too_much=main.Plan(title='优化',summary='优化',steps=['检查'],session_actions=[main.SessionAction(text='检查',kind='core',minutes=21)])
+    with pytest.raises(main.ConstraintError):main.validate_plan(too_much,seen[1])
+
+
+def test_today_actions_support_followup_and_pending_collection(client,monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,3))
+    job=client.post('/api/v1/plans',json={'kind':'goal','goal':'完成简历','availability':'十分钟'}).json()['id']
+    plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    first=client.get('/api/v1/today').json()['goals_unscheduled'][0]
+    assert first['plant_id']==plant and 'stage_id' not in first
+    assert client.put(base+f"/actions/{first['index']}",json={'completed':True}).json()['stage_completed']
+    pending=client.get('/api/v1/completion-notices').json()['notices']
+    assert len(pending)==1 and pending[0]['plant_id']==plant
+    collection=client.get('/api/v1/collections').json()['collections']
+    assert len(collection)==1 and collection[0]['kind']=='goal' and collection[0]['stage_number']==1
+    assert client.post(base+'/completion-notice',json={'choice':'continue'}).status_code==200
+    proposal=client.post(base+'/goal-next-proposals',json={'title':'优化','steps':['检查']}).json()['id']
+    stage=client.post(f'/api/v1/goal-next-proposals/{proposal}/confirm').json()['stage_id']
+    next_item=client.get('/api/v1/today').json()['goals_unscheduled'][0]
+    assert next_item['stage_id']==stage
+    assert client.put(f'/api/v1/goal-stages/{stage}/actions/0',json={'completed':True}).json()['stage_completed']
+    assert len(client.get('/api/v1/collections').json()['collections'])==2
+    main.init_db();assert client.get('/api/v1/completion-notices').json()['notices'][0]['plant_id']==plant
+    monkeypatch.setattr(main,'OWNER','other')
+    assert client.get('/api/v1/completion-notices').json()['notices']==[]
+    assert client.get('/api/v1/collections').json()['collections']==[]
+
+
+def test_today_habit_backfill_and_collection_corrections(client,monkeypatch):
+    from datetime import date
+    monkeypatch.setattr(main,'habit_today',lambda _:date(2026,11,3))
+    schedule={'start_date':'2026-11-01','end_date':'2026-11-03','timezone':'Asia/Shanghai','weekdays':list(range(7)),'completion_standard':'阅读','growth_threshold':2}
+    job=client.post('/api/v1/plans',json={'kind':'habit','goal':'阅读','availability':'十分钟','habit_schedule':schedule}).json()['id']
+    plant=client.post(f'/api/v1/proposals/{job}/confirm').json()['id'];base=f'/api/v1/plants/{plant}'
+    before=client.get('/api/v1/today').json()
+    assert [h['date'] for h in before['habits_backfill']]==['2026-11-02','2026-11-01']
+    assert client.put(base+'/habit-occurrences/2026-11-02',json={'completed':True,'performed':True}).status_code==200
+    response=client.put(base+'/habit-occurrences/2026-11-03',json={'completed':True,'performed':True})
+    assert response.json()['stage_completed']
+    items=client.get('/api/v1/collections').json()['collections']
+    assert len(items)==1 and items[0]['details']['completed']==2 and not items[0]['changed']
+    assert client.put(base+'/habit-occurrences/2026-11-02',json={'completed':False,'performed':False}).status_code==200
+    item=client.get('/api/v1/collections').json()['collections'][0]
+    assert item['changed'] and item['details']['completed']==2
+    assert client.post(base+'/completion-notice',json={'choice':'finish'}).status_code==200
+    assert not client.get('/api/v1/today').json()['habits_backfill']
+
+
+def test_initial_goal_duration_limit_is_not_inferred_when_unspecified():
+    explicit = {'kind':'goal', 'goal':'优化简历', 'availability':'希望 3 天内完成；每次最多 20 分钟', 'session_budget_minutes':20}
+    plan = main.Plan(title='优化简历', summary='分步修改', steps=['第4天：检查简历'], session_actions=[main.SessionAction(text='检查简历',kind='core',minutes=20)])
+    with pytest.raises(main.ConstraintError, match='完成期限'):
+        main.validate_plan(plan, explicit)
+    plan.steps = ['第3天：检查简历']
+    assert main.validate_plan(plan, explicit)['session_total_minutes'] == 20
+    unknown = {'kind':'goal','goal':'优化简历','availability':'未单独指定期限，请提出建议；每次可投入时间不确定'}
+    plan.steps = ['第4天：检查简历']
+    assert main.validate_plan(plan, unknown)['budget_checked'] is False

@@ -1,6 +1,7 @@
 """Deterministic checks for explicit numeric constraints; text checks are limited."""
 import re
 import json
+from datetime import date
 from difflib import SequenceMatcher
 
 
@@ -31,11 +32,49 @@ def validate_plan(plan, source):
                 raise ConstraintError('计划包含未确认的用户事实，请修改后再确认。')
     goal_context = ' '.join([source.get('goal', ''), source.get('background', ''), *[item.get('answer', '') for item in source.get('history', [])]])
     availability = source.get('availability', '')
+    schedule=source.get('habit_schedule')
+    if source.get('kind')=='habit' and schedule:
+        duration=(date.fromisoformat(str(schedule['end_date']))-date.fromisoformat(str(schedule['start_date']))).days+1
+        text='\n'.join([plan.summary,*plan.steps])
+        for match in re.finditer(r'第\s*([0-9]{1,3}|[一二三四五六七八九十]{1,3})\s*(天|日|周|星期)',text):
+            value=number(match.group(1))
+            if value is not None and ((value-1)*7+1 if match.group(2) in ('周','星期') else value)>duration:
+                raise ConstraintError('计划包含超出所选周期的日期或周数，请重新生成。')
+        for match in re.finditer(r'([0-9]{1,3}|[一二三四五六七八九十]{1,3})\s*(天|日|周|星期)\s*(?:习惯|计划|周期|安排|训练)',text):
+            value=number(match.group(1))
+            if value is not None and (value*7 if match.group(2) in ('周','星期') else value)>duration:
+                raise ConstraintError('计划时长超过所选习惯周期，请重新生成。')
     daily = re.search(r'每天|每日|天天|一天\s*(?:一|1|两|2|半|[0-9]+)\s*(?:小?时|分钟)', availability)
-    if source.get('kind') == 'goal' and daily and re.search(r'(?:一|1|七|7)\s*(?:周|星期|天|日)', goal_context):
+    if source.get('kind') == 'goal' and not source.get('_goal_followup') and daily and re.search(r'(?:一|1|七|7)\s*(?:周|星期|天|日)', goal_context):
         missing_days = [n for n in range(1, 8) if not any(re.search(rf'第\s*(?:{n}|{ "一二三四五六七"[n-1] })\s*天', step) for step in plan.steps)]
         if missing_days:
             raise ConstraintError('请分别列出第1天到第7天的计划，覆盖完整一周。')
+    # The initial goal form records an explicitly supplied duration in availability.
+    # Check common numbered-day/week statements; free-form schedules still need review.
+    initial_days = re.search(r'希望\s*([0-9]{1,4})\s*天内完成', availability) if source.get('kind') == 'goal' and not source.get('_goal_followup') else None
+    if initial_days:
+        limit = int(initial_days.group(1))
+        text = '\n'.join([plan.summary, *plan.steps])
+        for match in re.finditer(r'第\s*([0-9]{1,4}|[一二三四五六七八九十]{1,3})\s*(天|日|周|星期)', text):
+            value = number(match.group(1))
+            if value is not None and ((value - 1) * 7 + 1 if match.group(2) in ('周', '星期') else value) > limit:
+                raise ConstraintError('计划包含超出你填写的完成期限的日期，请调整。')
+        for match in re.finditer(r'([0-9]{1,4}|[一二三四五六七八九十]{1,3})\s*(天|日|周|星期)\s*(?:的)?(?:计划|周期|安排|完成)', text):
+            value = number(match.group(1))
+            if value is not None and value * (7 if match.group(2) in ('周', '星期') else 1) > limit:
+                raise ConstraintError('计划时长超过你填写的完成期限，请调整。')
+    if source.get('_goal_followup'):
+        limit=(source.get('followup_time') or {}).get('duration_days')
+        if limit is not None:
+            text='\n'.join([plan.summary,*plan.steps])
+            for match in re.finditer(r'第\s*([0-9]{1,3}|[一二三四五六七八九十]{1,3})\s*(天|日|周|星期)',text):
+                value=number(match.group(1))
+                if value is not None and ((value-1)*7+1 if match.group(2) in ('周','星期') else value)>limit:
+                    raise ConstraintError('后续阶段包含超出用户指定周期的日期，请调整。')
+            for match in re.finditer(r'([0-9]{1,3}|[一二三四五六七八九十]{1,3})\s*(天|日|周|星期)\s*(?:的)?(?:计划|周期|安排|完成)',text):
+                value=number(match.group(1))
+                if value is not None and value*(7 if match.group(2) in ('周','星期') else 1)>limit:
+                    raise ConstraintError('后续阶段计划时长超过用户指定周期，请调整。')
     # Catch a common self-contradiction; broader semantic consistency still needs review.
     if re.search(r'不(?:另行|额外|再)?(?:安排|进行|做)[^。；;\n]{0,15}记录', plan.summary):
         for step in plan.steps:
