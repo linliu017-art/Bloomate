@@ -10,3 +10,14 @@ node_modules
 data/
 *.tsbuildinfo
 .DS_Store
+
+# Local-only data, evidence and generated artifacts
+*.sqlite
+*.sqlite3
+*.db
+*.erasures.jsonl
+bloomate-personal-data*.json
+docs/evidence/
+docs/项目状态.md
+designs/
+

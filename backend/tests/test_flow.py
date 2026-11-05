@@ -1,6 +1,17 @@
 from fastapi.testclient import TestClient
 import pytest
-from app import main
+from app import main, auth
+from app.identity import owner_context
+
+def use_owner(client, owner):
+    with main.connect() as db:
+        db.execute("INSERT OR IGNORE INTO auth_subjects(id,kind,created_at) VALUES (?,'account',?)", (owner,auth.now()))
+        raw = auth.create_session(db,owner,auth.now()+86400)
+    client.cookies.clear()
+    client.cookies.set(auth.ACCOUNT_COOKIE,raw)
+    client.headers.update({"Origin":"http://testserver","X-Bloomate-CSRF":auth.csrf(raw)})
+    owner_context.set(owner)
+
 
 
 @pytest.fixture
@@ -8,8 +19,16 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setattr(main, 'DB', str(tmp_path / 'test.sqlite3'))
     monkeypatch.setenv('BLOOMATE_TEST_MODEL', '1')
     monkeypatch.setenv('MODEL_ENABLED', '0')
-    with TestClient(main.app) as c:
-        yield c
+    monkeypatch.setenv('BLOOMATE_APP_MODE','local')
+    monkeypatch.setenv('BLOOMATE_COOKIE_SECURE','0')
+    monkeypatch.setenv('BLOOMATE_ALLOWED_ORIGINS','http://testserver')
+    token=owner_context.set('local-user')
+    try:
+        with TestClient(main.app) as c:
+            use_owner(c,'local-user')
+            yield c
+    finally:
+        owner_context.reset(token)
 
 
 @pytest.mark.parametrize('kind', ['goal', 'habit'])
@@ -48,7 +67,7 @@ def test_habit_and_other_owner_cannot_use_goal_actions(client, monkeypatch):
     url=f'/api/v1/plants/{plant}/actions'
     assert client.get(url).status_code == 409
     assert client.put(url+'/0',json={'completed':True}).status_code == 409
-    monkeypatch.setattr(main,'OWNER','someone-else')
+    use_owner(client,'someone-else')
     assert client.get(url).status_code == 404
     assert client.put(url+'/0',json={'completed':True}).status_code == 404
 
@@ -78,7 +97,7 @@ def test_habit_scheduled_checkins_and_boundaries(client, monkeypatch):
     assert client.get(base+'/habit-stage').json()['occurrences'][0]['completed'] is True
     with main.connect() as db:
         assert db.execute('select count(*) from habit_events').fetchone()[0] == 3
-    monkeypatch.setattr(main,'OWNER','someone-else')
+    use_owner(client,'someone-else')
     assert client.get(base+'/habit-stage').status_code == 404
     assert put('2026-11-10').status_code == 404
 
@@ -128,7 +147,7 @@ def test_adjustment_conflicts_discard_and_completed_step(client, monkeypatch):
     old=draft();client.put(base+'/actions/0',json={'completed':True})
     assert client.post('/api/v1/adjustments/'+old+'/confirm',json={'text':'修改'}).json()['error']['code']=='PLAN_CHANGED'
     assert client.post(base+'/adjustments',json={'step_index':0,'difficulty':'调整'}).status_code==409
-    monkeypatch.setattr(main,'OWNER','someone-else')
+    use_owner(client,'someone-else')
     assert client.get('/api/v1/adjustments/'+old).status_code==404
 
 
@@ -193,7 +212,7 @@ def test_manual_goal_actions_cancel_restore_and_history(client, monkeypatch):
     assert client.put(base+'/actions/1/text',json={'text':'不可改'}).status_code==409
     with main.connect() as db:assert [r['event'] for r in db.execute('select event from goal_action_events order by rowid')]==['added','edited_before','edited_after','cancelled','restored']
     main.init_db();assert client.get(base+'/actions').json()['actions'][1]['completed']
-    monkeypatch.setattr(main,'OWNER','other');assert client.post(base+'/actions',json={'text':'不能访问'}).status_code==404
+    use_owner(client,'other');assert client.post(base+'/actions',json={'text':'不能访问'}).status_code==404
 
 
 def test_manual_goal_actions_maximum_and_invalid(client):
@@ -305,7 +324,7 @@ def test_legacy_schedule_proposal_still_confirms_when_unchanged(client, monkeypa
     with main.connect() as db:
         stage=db.execute('select * from habit_stages where id=?',(stage_id,)).fetchone();old_hash=main.habit_schedule_hash(db,stage,include_start=False)
         before={'end_date':'2026-11-20','weekdays':list(range(7))};after={'end_date':'2026-11-18','weekdays':[0,2,4],'effective_date':'2026-11-12','future_count':3}
-        db.execute('insert into habit_schedule_proposals values (?,?,?,?,?,?,?,?)',('legacy',main.OWNER,plant,stage_id,old_hash,json.dumps(before),json.dumps(after),'pending'))
+        db.execute('insert into habit_schedule_proposals values (?,?,?,?,?,?,?,?)',('legacy',main.owner_id(),plant,stage_id,old_hash,json.dumps(before),json.dumps(after),'pending'))
     assert client.post('/api/v1/habit-schedule-proposals/legacy/confirm').status_code==200
     stage=client.get(base+'/habit-stage').json()['stage'];assert stage['start_date']=='2026-11-12' and stage['end_date']=='2026-11-18'
 
@@ -371,7 +390,7 @@ def test_goal_growth_requires_standard_and_confirmation_and_reverses(client, mon
     client.put(base+'/actions/0',json={'completed':False});assert client.get(base+'/growth').json()['achieved'] is False
     with main.connect() as db: assert [r['event'] for r in db.execute('select event from growth_events order by rowid')]==['standard_confirmed','achieved','revoked']
     main.init_db();assert not client.get(base+'/growth').json()['achieved']
-    monkeypatch.setattr(main,'OWNER','another');assert client.get(base+'/growth').status_code==404
+    use_owner(client,'another');assert client.get(base+'/growth').status_code==404
 
 
 def test_habit_growth_counts_checkins_and_undo(client, monkeypatch):
@@ -424,7 +443,7 @@ def test_habit_advice_is_persistent_and_never_changes_plan(client, monkeypatch):
     aid=response.json()['id'];assert client.get('/api/v1/habit-advice/'+aid).json()['status']=='done'
     assert client.get(base+'/habit-stage').json()==before
     main.init_db();assert client.get('/api/v1/habit-advice/'+aid).json()['status']=='done'
-    monkeypatch.setattr(main,'OWNER','another');assert client.get('/api/v1/habit-advice/'+aid).status_code==404
+    use_owner(client,'another');assert client.get('/api/v1/habit-advice/'+aid).status_code==404
 
 
 def test_validation_and_missing(client):
@@ -442,7 +461,7 @@ def test_no_model_returns_explicit_error(client, monkeypatch):
 
 def test_interrupted_job_recovered_as_error(client):
     with main.connect() as db:
-        db.execute("INSERT INTO jobs (id,owner_id,status,input_json) VALUES ('old',?,'running','{}')", (main.OWNER,))
+        db.execute("INSERT INTO jobs (id,owner_id,status,input_json) VALUES ('old',?,'running','{}')", (main.owner_id(),))
     main.init_db()
     assert client.get('/api/v1/plans/old').json()['error']['code'] == 'INTERRUPTED'
 
@@ -637,7 +656,11 @@ def test_old_jobs_are_readable_after_additive_migration(tmp_path, monkeypatch):
         db.execute('CREATE TABLE jobs (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, status TEXT NOT NULL, input_json TEXT NOT NULL, proposal_json TEXT, error_code TEXT)')
         db.execute('INSERT INTO jobs VALUES (?,?,?,?,?,?)',('old','local-user','done','{}','{"question":"旧问题","plan":null}',None))
     monkeypatch.setattr(main,'DB',str(db_path))
+    monkeypatch.setenv('BLOOMATE_APP_MODE','local')
+    monkeypatch.setenv('BLOOMATE_COOKIE_SECURE','0')
+    monkeypatch.setenv('BLOOMATE_ALLOWED_ORIGINS','http://testserver')
     with TestClient(main.app) as client:
+        use_owner(client,'local-user')
         result=client.get('/api/v1/plans/old')
         assert result.status_code==200 and result.json()['question']=='旧问题'
         assert result.json()['next_job_id'] is None
@@ -788,7 +811,7 @@ def test_goal_collection_requires_completed_steps_and_keeps_snapshot(client, mon
     assert saved['plan']==plan and saved['outcome']=='做到了'
     client.put(base+'/actions/0',json={'completed':False})
     assert client.get(base+'/collection').json()['collection']==saved
-    monkeypatch.setattr(main,'OWNER','another')
+    use_owner(client,'another')
     assert client.get(base+'/collection').status_code==404
 
 
@@ -825,7 +848,7 @@ def test_flower_choice_persists_and_snapshot_keeps_species(client, monkeypatch):
     main.init_db()
     assert client.get(base+'/collection').json()['collection']['plan']['flower_species']=='daisy'
     assert client.put(base+'/flower',json={'species':'daisy'}).status_code==200
-    monkeypatch.setattr(main,'OWNER','another')
+    use_owner(client,'another')
     assert client.put(base+'/flower',json={'species':'daisy'}).status_code==404
 
 
@@ -866,7 +889,7 @@ def test_habit_stage_collection_next_stage_and_restart(client,monkeypatch):
     assert client.put(f'/api/v1/habit-stages/{old_stage}/occurrences/2026-11-02',json={'completed':False,'performed':False}).status_code==200
     changed=client.get(base+'/habit-stages').json()['collections'][0]
     assert changed['changed'] and changed['snapshot']['completed']==1 and not changed['current_entries'][0]['completed']
-    monkeypatch.setattr(main,'OWNER','someone-else');assert client.get(base+'/habit-stages').status_code==404
+    use_owner(client,'someone-else');assert client.get(base+'/habit-stages').status_code==404
 
 
 def test_discarded_next_stage_never_commits(client,monkeypatch):
@@ -899,9 +922,9 @@ def test_memory_requires_opt_in_and_is_removed_from_later_model_calls(client,mon
     assert client.put('/api/v1/memory/preference',json={'enabled':False}).status_code==200
     main.generate(data);assert '_confirmed_preferences' not in seen[-1]
     assert client.put(f'/api/v1/memory/items/{memory_id}',json={'content':'不应保存'}).status_code==409
-    monkeypatch.setattr(main,'OWNER','other');assert client.get('/api/v1/memory').json()=={'enabled':False,'items':[]}
+    use_owner(client,'other');assert client.get('/api/v1/memory').json()=={'enabled':False,'items':[]}
     assert client.delete(f'/api/v1/memory/items/{memory_id}').status_code==404
-    monkeypatch.setattr(main,'OWNER','local-user');assert client.delete(f'/api/v1/memory/items/{memory_id}').status_code==200
+    use_owner(client,'local-user');assert client.delete(f'/api/v1/memory/items/{memory_id}').status_code==200
     assert client.get('/api/v1/memory').json()['items']==[]
 
 
@@ -926,7 +949,7 @@ def test_gardener_care_deduplicates_respects_pause_and_can_be_disabled(client,mo
     assert client.get('/api/v1/care').json()=={'enabled':False,'messages':[]}
     assert client.post('/api/v1/care/refresh').json()['created']==0
     main.init_db();assert client.get('/api/v1/care').json()['enabled'] is False
-    monkeypatch.setattr(main,'OWNER','other');assert client.post('/api/v1/care/'+messages[0]['id']+'/dismiss').status_code==404
+    use_owner(client,'other');assert client.post('/api/v1/care/'+messages[0]['id']+'/dismiss').status_code==404
 
 
 def test_care_requires_two_missed_scheduled_actions_not_future_or_paused(client,monkeypatch):
@@ -1004,7 +1027,7 @@ def test_existing_habit_plan_revision_requires_confirmation_and_preserves_data(c
     assert client.post('/api/v1/habit-plan-revisions/'+revision+'/confirm').status_code==200
     updated=client.get('/api/v1/garden').json()['plants'][0]['plan']
     assert updated['summary']=='测试提案' and updated['flower_species']=='daisy' and client.get(base+'/habit-stage').json()==before
-    monkeypatch.setattr(main,'OWNER','someone-else');assert client.get('/api/v1/habit-plan-revisions/'+revision).status_code==404
+    use_owner(client,'someone-else');assert client.get('/api/v1/habit-plan-revisions/'+revision).status_code==404
 
 
 def test_existing_habit_revision_rejects_stale_and_discarded(client,monkeypatch):
@@ -1093,7 +1116,7 @@ def test_goal_followup_dates_today_overdue_clear_and_restore(client,monkeypatch)
     assert len(client.get('/api/v1/today').json()['goals_unscheduled'])==2
     client.put(base+'/pause',json={'paused':True})
     assert not client.get('/api/v1/today').json()['goals_unscheduled']
-    monkeypatch.setattr(main,'OWNER','another')
+    use_owner(client,'another')
     assert client.put(datepath.format(0),json={'due_date':'2026-11-03'}).status_code==404
 
 
@@ -1121,7 +1144,7 @@ def test_gardener_goal_followup_suggest_edit_and_confirm(client,monkeypatch):
     assert client.post('/api/v1/goal-next-proposals/'+proposal.json()['id']+'/confirm').status_code==200
     assert client.get(base+'/goal-stages').json()['stages'][0]['steps']==['修改项目经历','让朋友检查']
     assert client.post(base+'/goal-next-proposals',json={'title':'旧建议','steps':['旧建议'],'generation_id':gen}).status_code==409
-    monkeypatch.setattr(main,'OWNER','other')
+    use_owner(client,'other')
     assert client.get('/api/v1/plans/'+gen).status_code==404
     assert client.post(base+'/goal-next-generation',json={'title':'优化简历'}).status_code==404
 
@@ -1193,7 +1216,7 @@ def test_today_actions_support_followup_and_pending_collection(client,monkeypatc
     assert client.put(f'/api/v1/goal-stages/{stage}/actions/0',json={'completed':True}).json()['stage_completed']
     assert len(client.get('/api/v1/collections').json()['collections'])==2
     main.init_db();assert client.get('/api/v1/completion-notices').json()['notices'][0]['plant_id']==plant
-    monkeypatch.setattr(main,'OWNER','other')
+    use_owner(client,'other')
     assert client.get('/api/v1/completion-notices').json()['notices']==[]
     assert client.get('/api/v1/collections').json()['collections']==[]
 

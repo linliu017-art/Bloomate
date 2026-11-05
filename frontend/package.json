@@ -1,1 +1,25 @@
-{"name":"bloomate","version":"0.1.0","private":true,"scripts":{"dev":"next dev","build":"next build","lint":"eslint .","typecheck":"tsc --noEmit"},"dependencies":{"next":"^15.5.0","react":"^19.1.0","react-dom":"^19.1.0"},"devDependencies":{"@types/node":"^22.0.0","@types/react":"^19.0.0","@types/react-dom":"^19.0.0","eslint":"^9.0.0","eslint-config-next":"^15.5.0","typescript":"^5.0.0"}}
+{
+  "name": "bloomate",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/run-tests.mjs"
+  },
+  "dependencies": {
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.5.0",
+    "typescript": "^5.0.0"
+  }
+}

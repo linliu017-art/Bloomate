@@ -1,13 +1,12 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import {AuthBoundary, AccountControls} from '../features/auth/AuthBoundary';
+import {apiFetch as fetch} from '../features/auth/api';
 
-type Action = {text: string; kind: 'core'|'other'; minutes: number|null};
-type HabitPlanSchedule = {start_date:string;end_date:string;timezone:string;weekdays:number[];completion_standard:string;growth_threshold:number};
-type Constraints = {session_budget_minutes: number|null; habit_completion_minutes: number|null; habit_schedule?: HabitPlanSchedule|null};
-type FlowerSpecies = 'sunflower'|'daisy'|'tulip';
+import {createPlanningApi, type Constraints, type FlowerSpecies, type Plan} from '../features/planning/api';
+const planningApi=createPlanningApi(fetch);
 const flowerNames:Record<FlowerSpecies,string>={sunflower:'向日葵',daisy:'雏菊',tulip:'郁金香'};
-type Plan = { title: string; summary: string; steps: string[]; session_actions?: Action[]|null; growth_nodes?: number[]|null; flower_species?: FlowerSpecies|null; flower_reason?: string|null };
 type Plant = { id: string; title: string; kind: string; plan: Plan; constraints?: Constraints };
 type GoalAction = {index: number; text: string; completed: boolean; due_date:string|null; cancelled:boolean};
 type TodayGoal = {plant_id:string;plant_title:string;stage_id?:string; index:number; text:string; due_date:string|null; completed:boolean};
@@ -106,9 +105,73 @@ function FlowerArt({stage,species,count}:{stage:number;species?:FlowerSpecies|nu
 type CollectionItem={id:string;plant_id:string;kind:'habit'|'goal';title:string;stage_number:number;species:FlowerSpecies|null;completed_at:string|null;changed:boolean;details:{start_date?:string;end_date?:string;completion_standard?:string;completed?:number;threshold?:number;summary?:string;steps?:string[];outcome?:string}};
 function CollectionGallery({onOpenPlant}:{onOpenPlant:(id:string)=>void}) {
   const [items,setItems]=useState<CollectionItem[]|null>(null);const [error,setError]=useState('');
-  const load=useCallback(async()=>{const r=await fetch('/api/v1/collections');if(!r.ok)throw new Error();setItems((await r.json()).collections);setError('');},[]);
-  useEffect(()=>{const refresh=()=>void load().catch(()=>setError('收藏暂时无法读取。'));refresh();window.addEventListener('bloomate-progress',refresh);return()=>window.removeEventListener('bloomate-progress',refresh);},[load]);
-  return <section className="card collection-gallery"><div className="section-heading"><div><span className="eyebrow">YOUR COLLECTION</span><h2>我的收藏</h2><p className="muted">每一朵花，都记录着你完成过的阶段。</p></div>{items && <span className="count-badge">{items.length}</span>}</div>{error && <p role="status">{error}</p>}{!items&&!error?<p>正在读取收藏…</p>:items?.length===0?<div className="today-empty"><span aria-hidden="true">✿</span><strong>这里还没有收藏</strong><p>完成一个目标或习惯阶段，花就会来到这里。</p></div>:<div className="collection-grid">{items?.map(item=><details key={`${item.kind}-${item.id}`} className="collection-card"><summary><span className="collection-art" aria-hidden="true"><FlowerArt stage={5} species={item.species} count={0}/></span><span className="collection-card-copy"><strong>{item.species?flowerNames[item.species]:'花种未记录'}</strong><span>{item.title}</span><small>{item.kind==='habit'?'习惯':'目标'} · 第 {item.stage_number} 阶段</small><small>{item.completed_at?`收藏于 ${item.completed_at.slice(0,10)}`:'收藏日期未记录'}</small>{item.changed && <small>记录后来有更正</small>}<span className="collection-link">查看阶段记录 ↓</span></span></summary><div className="collection-details">{item.details.summary && <p>{item.details.summary}</p>}{item.kind==='habit' && <><p>{item.details.start_date} 至 {item.details.end_date}</p><p>完成 {item.details.completed} / {item.details.threshold} 次 · {item.details.completion_standard}</p></>}{item.details.steps && <ul>{item.details.steps.map((step,i)=><li key={i}>{step}</li>)}</ul>}{item.details.outcome && <p>{item.details.outcome}</p>}{item.changed && <p>以上为收藏时的成果，记录后来有更正。</p>}<button type="button" onClick={()=>onOpenPlant(item.plant_id)}>查看这株植物</button></div></details>)}</div>}</section>;
+  const load=useCallback(async()=>{try{const r=await fetch('/api/v1/collections');if(!r.ok)throw new Error();const data=await r.json();if(!Array.isArray(data.collections))throw new Error();setItems(data.collections);setError('');}catch{setError('收藏暂时无法读取，请重试。');}},[]);
+  useEffect(()=>{void load();window.addEventListener('bloomate-progress',load);return()=>window.removeEventListener('bloomate-progress',load);},[load]);
+  return <section className="collection-gallery collection-refresh" aria-label="我的收藏">
+    <div className="collection-intro"><h2>把努力，留成一朵花。</h2><p>完成过的阶段，都会在这里好好保留。{items && `共 ${items.length} 份收藏。`}</p></div>
+    {error && <p className="message" role="alert">{error} <button type="button" className="text-button" onClick={()=>void load()}>重新读取收藏</button></p>}
+    {!items&&!error?<p role="status">正在读取收藏…</p>:items?.length===0?<div className="empty"><span aria-hidden="true">✿</span><h3>这里还没有收藏</h3><p>完成一个目标或习惯阶段，花就会来到这里。</p></div>:<div className="collection-grid">{items?.map(item=><article key={`${item.kind}-${item.id}`} className="collection-card">
+      <div className="collection-art" aria-hidden="true"><FlowerArt stage={5} species={item.species} count={0}/></div>
+      <div className="collection-card-copy"><span className="collection-kind">{item.kind==='habit'?'习惯':'目标'} · 第 {item.stage_number} 阶段</span><h3>{item.title}</h3><p>{item.species?flowerNames[item.species]:'花种未记录'} · {item.completed_at?`收藏于 ${item.completed_at.slice(0,10)}`:'收藏日期未记录'}</p>
+        {item.kind==='habit' && <p>完成 {item.details.completed ?? '未记录'} / {item.details.threshold ?? '未记录'} 次 · {item.details.completion_standard}</p>}
+        {item.changed && <p className="collection-correction">记录后来有更正，原收藏保留</p>}
+        <details className="collection-record"><summary>回看这一阶段</summary><div className="collection-details">
+          {item.details.summary && <p>{item.details.summary}</p>}
+          {item.kind==='habit' && <p>{item.details.start_date} 至 {item.details.end_date}</p>}
+          {item.details.steps && <ol>{item.details.steps.map((step,i)=><li key={i}>{step}</li>)}</ol>}
+          {item.details.outcome && <p>{item.details.outcome}</p>}
+          {item.changed && <p>以上为收藏时的成果，记录后来有更正。</p>}
+          <button type="button" className="outline-button" onClick={()=>onOpenPlant(item.plant_id)}>查看这株植物 →</button>
+        </div></details>
+      </div>
+    </article>)}</div>}
+  </section>;
+}
+
+function GardenPlantTile({plant,onOpen}:{plant:Plant;onOpen:()=>void}) {
+  const [data,setData]=useState<{growth:Growth;paused:boolean;next:string;stageStatus:string}|null>(null);
+  const [error,setError]=useState('');
+  const load=useCallback(async()=>{
+    try {
+      async function get(path:string){const r=await fetch(`/api/v1/plants/${plant.id}/${path}`);if(!r.ok)throw new Error();return r.json();}
+      const [growth,pause,actions,stages]=await Promise.all([get('growth'),get('pause'),get(plant.kind==='goal'?'actions':'habit-stage'),plant.kind==='goal'?get('goal-stages'):Promise.resolve(null)]);
+      let next='';let stageStatus='进行中';
+      if(plant.kind==='goal') {
+        const active:GoalStage|undefined=stages.stages.find((stage:GoalStage)=>stage.active);
+        const first:GoalAction|undefined=actions.actions.find((a:GoalAction)=>!a.completed&&!a.cancelled);
+        const index=active?.states.findIndex((done:boolean)=>!done) ?? -1;
+        next=active?(index>=0?`下一步 · ${active.steps[index]}`:'当前阶段步骤已全部完成'):first?`下一步 · ${first.text}`:'计划步骤已完成，查看阶段成果';
+        if(growth.counts?.total>0&&growth.counts.completed>=growth.counts.total)stageStatus='阶段已达标';
+      } else {
+        const stage:HabitStage|null=actions.stage;
+        stageStatus=!stage?'周期待设置':stage.status==='ended'?'已结束':stage.status==='review_due'?'等待复盘':stage.status==='upcoming'?'尚未开始':growth.achieved?'阶段已达标':'进行中';
+        if(stage && stage.status!=='ended'&&stage.status!=='review_due') {
+          const start=stage.today>stage.start_date?stage.today:stage.start_date;
+          for(let t=Date.parse(start+'T00:00:00Z'),end=Date.parse(stage.end_date+'T00:00:00Z'),i=0;t<=end&&i<3660;t+=86400000,i++){
+            const day=new Date(t),date=day.toISOString().slice(0,10);
+            const completed=actions.occurrences.some((a:Occurrence)=>a.date===date&&a.completed);
+            if(stage.weekdays.includes((day.getUTCDay()+6)%7)&&!completed){next=`${date===stage.today?'今天':date} · ${stage.completion_standard}`;break;}
+          }
+        }
+        if(!next)next=stage?.status==='review_due'?'周期已到期，查看记录再决定下一步':stage?.status==='ended'?'历史记录保留，可以继续下一阶段':stage?'查看本阶段行动与记录':'先设置周期，再开始打卡';
+      }
+      if(pause.paused)next='已暂停，恢复后继续；已有进展保留';
+      setData({growth,paused:pause.paused,next,stageStatus});setError('');
+    }catch{setError('植物状态暂时无法读取。');}
+  },[plant.id,plant.kind]);
+  useEffect(()=>{void load();window.addEventListener('bloomate-progress',load);return()=>window.removeEventListener('bloomate-progress',load);},[load]);
+  const g=data?.growth,count=g?.counts?.completed??0;
+  const ratio=g?(plant.kind==='goal'?(g.progress_percent??0)/100:g.counts?.total?count/g.counts.total:0):0;
+  const nodes=plant.plan.growth_nodes??[14,42,71,85];
+  const stage=plant.kind==='habit'&&g?.achieved||plant.kind==='goal'&&ratio>=1?5:ratio*100>=nodes[3]?4:ratio*100>=nodes[2]?3:ratio*100>=nodes[1]?2:ratio*100>=nodes[0]?1:0;
+  return <article className={`garden-plant-tile ${plant.kind==='habit'?'habit-tile':''}`}>
+    <div className="garden-tile-art" aria-hidden="true">{data?<FlowerArt stage={stage} species={plant.plan.flower_species} count={count}/>:<span>✿</span>}</div>
+    <div className="garden-tile-copy"><div className="garden-tile-status"><span>{plant.kind==='goal'?'目标':'习惯'}</span><span>{error?'读取失败':!data?'正在读取…':data.paused?'已暂停':data.stageStatus}</span></div><h2>{plant.title}</h2>
+      {data && !error && <>{g?.counts?<><div className="garden-progress" role="progressbar" aria-label={`${plant.title}的${plant.kind==='goal'?'计划步骤':'打卡'}进度`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(Math.min(1,ratio)*100)}><span style={{width:`${Math.max(0,Math.min(1,ratio))*100}%`}}/></div><p className="garden-tile-status"><span>{plant.kind==='goal'?'计划步骤':'本阶段打卡'}</span><span>{count} / {g.counts.total}{plant.kind==='habit'&&g.threshold?` · 达标 ${g.threshold} 次`:''}</span></p></>:<p className="muted">周期尚未设置</p>}<p className="garden-tile-next">{data.next}</p></>}
+      {error && <p className="garden-tile-next" role="alert">{error} <button type="button" className="text-button" onClick={()=>void load()}>重试</button></p>}
+      <button type="button" className="garden-open" onClick={onOpen} aria-label={`查看${plant.title}的行动与成长`}>查看行动与成长 →</button>
+    </div>
+  </article>;
 }
 
 function FlowerPicker({value,onChange}:{value:FlowerSpecies;onChange:(value:FlowerSpecies)=>void}) {
@@ -322,7 +385,7 @@ function PlantCard({plant,onPlantChanged}: {plant:Plant;onPlantChanged:()=>Promi
     try {const response=await fetch(`/api/v1/plants/${plant.id}/pause`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({paused:!pause.paused})});const data=await response.json();if(!response.ok)throw new Error(data.error?.message || '操作失败。');setPause(data);window.dispatchEvent(new Event('bloomate-progress'));}
     catch(e){setError(e instanceof Error?e.message:'操作失败。');}finally{setBusy(false);}
   }
-  return <article className="plant-detail"><div className="plant-detail-head"><div><span className="plant-type">{plant.kind==='goal'?'目标':'习惯'} · {pause?.paused?'已暂停':completionStatus==='finished'?'已完成':completionStatus?'阶段已完成':'进行中'}</span><h2>{plant.title}</h2></div>{pause && <button type="button" className="outline-button small-button" disabled={busy} onClick={()=>void togglePause()}>{pause.paused?'恢复':'暂停'}</button>}</div>{pause?.paused && <p className="pause-note">暂停从 {pause.since} 开始。{pause.end_date ? `截止日期仍为 ${pause.end_date}，之后有 ${pause.future_days} 个计划日。` : '已有进展会保留。'}恢复不会自动延长期限；暂停及恢复当天按暂停日处理。{pause.threshold !== null && ` 阶段标准 ${pause.threshold} 次，已完成 ${pause.completed ?? 0} 次。`}{pause.future_dates.length > 0 && ` 之后计划日（最多显示10个）：${pause.future_dates.join('、')}。`}</p>}{error && <p role="status">{error}</p>}<PlantPortrait plantId={plant.id} kind={plant.kind} nodes={plant.plan.growth_nodes} species={species} completedStages={habitDisplay.count} currentCollected={habitDisplay.current}/>{plant.kind==='habit' && <HabitJourney plantId={plant.id} species={species} onHistory={setHistoryDisplay}/>} {plant.kind==='goal' && <GoalJourney plantId={plant.id} paused={pause?.paused || false} onActive={setGoalActive} onHistory={setHistoryDisplay}/>}{plant.kind==='habit' && <HabitPlanRevisionCard plant={plant} onChanged={onPlantChanged}/>}{!species && <div className="check-summary"><strong>为已有植物选择花种</strong><p>这株植物还没有记录品种，选择后会保留现有进度，确认后花种固定。</p><FlowerPicker value={choice} onChange={setChoice}/><button type="button" disabled={busy} onClick={()=>void saveFlower()}>确认花种</button></div>}<details className="plant-block"><summary>计划概览 <span>查看计划与时间</span></summary><p>{plant.plan.summary}</p>{plant.constraints?.session_budget_minutes && <p>每次最多 {plant.constraints.session_budget_minutes} 分钟{plant.constraints.habit_completion_minutes ? ` · 核心行动 ${plant.constraints.habit_completion_minutes} 分钟` : ''}</p>}{plant.plan.session_actions?.length ? <p>单次安排：{plant.plan.session_actions.map(a=>`${a.text} ${a.minutes}分钟`).join('、')}</p> : null}{plant.kind==='habit' && <ul>{plant.plan.steps.map((s,i)=><li key={i}>{s}</li>)}</ul>}</details><details className="plant-block"><summary>{plant.kind==='goal'?'行动与计划':'习惯记录与设置'} <span>{plant.kind==='goal'?'完成、安排、调整':'打卡、补签、调整周期'}</span></summary>{plant.kind==='goal' ? (goalActive ? <p>当前阶段的行动在上方。</p> : <GoalActions plantId={plant.id} paused={pause?.paused || false}/>) : <HabitActions plantId={plant.id} paused={pause?.paused || false}/>}</details><details id={`growth-${plant.id}`} className="plant-block"><summary>阶段成长 <span>设置标准、查看进度</span></summary><GrowthCard plantId={plant.id} kind={plant.kind}/></details>{plant.kind==='goal' && <GoalCollectionCard plantId={plant.id}/>}</article>;
+  return <article className="plant-detail"><div className="plant-detail-head"><div><span className="plant-type">{plant.kind==='goal'?'目标':'习惯'} · {pause?.paused?'已暂停':completionStatus==='finished'?'已完成':completionStatus?'阶段已完成':'进行中'}</span><h2>{plant.title}</h2></div>{pause && <button type="button" className="outline-button small-button" disabled={busy} onClick={()=>void togglePause()}>{pause.paused?'恢复':'暂停'}</button>}</div>{pause?.paused && <p className="pause-note">暂停从 {pause.since} 开始。{pause.end_date ? `截止日期仍为 ${pause.end_date}，之后有 ${pause.future_days} 个计划日。` : '已有进展会保留。'}恢复不会自动延长期限；暂停及恢复当天按暂停日处理。{pause.threshold !== null && ` 阶段标准 ${pause.threshold} 次，已完成 ${pause.completed ?? 0} 次。`}{pause.future_dates.length > 0 && ` 之后计划日（最多显示10个）：${pause.future_dates.join('、')}。`}</p>}{error && <p role="status">{error}</p>}<PlantPortrait plantId={plant.id} kind={plant.kind} nodes={plant.plan.growth_nodes} species={species} completedStages={habitDisplay.count} currentCollected={habitDisplay.current}/>{plant.kind==='habit' && <HabitJourney plantId={plant.id} species={species} onHistory={setHistoryDisplay}/>} {plant.kind==='goal' && <GoalJourney plantId={plant.id} paused={pause?.paused || false} onActive={setGoalActive} onHistory={setHistoryDisplay}/>}{plant.kind==='habit' && <HabitPlanRevisionCard plant={plant} onChanged={onPlantChanged}/>}{!species && <div className="check-summary"><strong>为已有植物选择花种</strong><p>这株植物还没有记录品种，选择后会保留现有进度，确认后花种固定。</p><FlowerPicker value={choice} onChange={setChoice}/><button type="button" disabled={busy} onClick={()=>void saveFlower()}>确认花种</button></div>}<details className="plant-block"><summary>计划概览 <span>查看计划与时间</span></summary><p>{plant.plan.summary}</p>{plant.constraints?.session_budget_minutes && <p>每次最多 {plant.constraints.session_budget_minutes} 分钟{plant.constraints.habit_completion_minutes ? ` · 核心行动 ${plant.constraints.habit_completion_minutes} 分钟` : ''}</p>}{plant.plan.session_actions?.length ? <p>单次安排：{plant.plan.session_actions.map(a=>`${a.text} ${a.minutes}分钟`).join('、')}</p> : null}{plant.kind==='habit' && <ul>{plant.plan.steps.map((s,i)=><li key={i}>{s}</li>)}</ul>}</details><details className="plant-block" open><summary>{plant.kind==='goal'?'行动与计划':'习惯记录与设置'} <span>{plant.kind==='goal'?'完成、安排、调整':'打卡、补签、调整周期'}</span></summary>{plant.kind==='goal' ? (goalActive ? <p>当前阶段的行动在上方。</p> : <GoalActions plantId={plant.id} paused={pause?.paused || false}/>) : <HabitActions plantId={plant.id} paused={pause?.paused || false}/>}</details><details id={`growth-${plant.id}`} className="plant-block"><summary>阶段成长 <span>设置标准、查看进度</span></summary><GrowthCard plantId={plant.id} kind={plant.kind}/></details>{plant.kind==='goal' && <GoalCollectionCard plantId={plant.id}/>}</article>;
 }
 
 type MemoryItem = {id:string;content:string};
@@ -336,10 +399,19 @@ function MemorySettings() {
   return <details className="memory-settings"><summary>园丁记忆 · {loaded?(enabled?'已开启':'默认关闭'):'读取中'}</summary><p>只有你主动保存的偏好会被记住；开启后，它们会在之后制定目标或习惯时发送给模型服务商。请不要填写敏感信息。关闭后，后续对话不再使用记忆；已发出的请求无法撤回。</p><button type="button" disabled={busy||!loaded} onClick={()=>void preference(!enabled)}>{enabled?'关闭园丁记忆':'开启园丁记忆'}</button>{enabled && <form onSubmit={event=>void save(event)}><label>想让园丁记住什么？<input name="content" maxLength={200} required value={text} onChange={e=>setText(e.target.value)} placeholder="例如：我喜欢每次行动不超过20分钟"/></label><button type="submit" disabled={busy}>确认保存</button></form>}{items.length>0 && <div><p>已保存的记忆（关闭时保留，可随时删除）</p>{items.map(item=><form key={item.id} onSubmit={event=>void save(event,item.id)}><label>记忆内容<input name="content" maxLength={200} required defaultValue={item.content} key={item.content} disabled={!enabled}/></label><button type="submit" disabled={busy||!enabled}>保存修改</button> <button type="button" disabled={busy} onClick={()=>void remove(item.id)}>删除</button></form>)}</div>}{message && <p role="status">{message}</p>}</details>;
 }
 
-export default function Home() {
+export default function Home() { return <AuthBoundary><BloomateApp/></AuthBoundary>; }
+
+function BloomateApp() {
   const [activeView,setActiveView] = useState<'today'|'plan'|'garden'>('today');
   const [selectedPlant,setSelectedPlant] = useState<string|null>(null);const [gardenTab,setGardenTab]=useState<'plants'|'collections'>('plants');
   const [kind, setKind] = useState<'goal'|'habit'>('goal');
+  const [planStep,setPlanStep]=useState<1|2|3>(1);
+  const [editingPlan,setEditingPlan]=useState(false);
+  const [taskState,setTaskState]=useState('');
+  const stepHeading=useRef<HTMLHeadingElement>(null);
+  const generationLock=useRef(false);
+  useEffect(()=>{if(activeView==='plan'){stepHeading.current?.focus({preventScroll:true});window.scrollTo({top:0});}},[planStep,activeView]);
+  useEffect(()=>{if(activeView==='garden'){document.getElementById('garden-heading')?.focus({preventScroll:true});window.scrollTo({top:0});}},[activeView,selectedPlant,gardenTab]);
   const [goal, setGoal] = useState('');
   const [background, setBackground] = useState('');
   const [goalDays, setGoalDays] = useState('');
@@ -368,10 +440,10 @@ export default function Home() {
     setJob(jobId); localStorage.setItem('bloomate-active-job', jobId);
     for (let i = 0; i < 75; i++) {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      const response = await fetch(`/api/v1/plans/${jobId}`); const result = await response.json();
-      if (!response.ok || result.status === 'error') throw new Error(result.error?.message || '计划生成失败。');
+      const result = await planningApi.get(jobId); setTaskState(result.status);
+      if (result.status === 'error') throw new Error(result.error?.message || '计划生成失败。');
       if (result.status === 'superseded' && result.next_job_id) return pollJob(result.next_job_id);
-      if (result.status === 'done') { setPlan(result.proposal); setQuestion(result.question || ''); setConstraints(result.constraints); if(result.kind==='habit'||result.kind==='goal')setKind(result.kind); return; }
+      if (result.status === 'done') { setPlan(result.proposal); setQuestion(result.question || ''); setConstraints(result.constraints); if(result.kind==='habit'||result.kind==='goal')setKind(result.kind); setPlanStep(result.proposal?3:2); return; }
     }
     throw new Error('等待时间较长，请稍后再试。');
   }, []);
@@ -381,67 +453,105 @@ export default function Home() {
     if (saved) {
       setActiveView('plan');
       setJob(saved);
-      fetch(`/api/v1/plans/${saved}`).then(r => r.json()).then(result => {
-        if (result.status === 'done') { setPlan(result.proposal); setQuestion(result.question || ''); setConstraints(result.constraints); if(result.kind==='habit'||result.kind==='goal')setKind(result.kind); }
+      setBusy(true); generationLock.current=true;
+      planningApi.get(saved).then(async result => {
+        if (result.status === 'done') { setPlan(result.proposal); setQuestion(result.question || ''); setConstraints(result.constraints); if(result.kind==='habit'||result.kind==='goal')setKind(result.kind); setPlanStep(result.proposal?3:2); }
         else if (result.status === 'error') setMessage(result.error?.message || '上一次生成中断，请重新开始。');
-        else if (result.status === 'superseded' && result.next_job_id) void poll(result.next_job_id).catch(() => setMessage('上一次对话暂时无法读取。'));
-        else if (result.status === 'pending' || result.status === 'running') void poll(saved).catch(() => setMessage('上一次对话尚未完成，请稍后重试。'));
-      }).catch(() => setMessage('上一次对话暂时无法读取。'));
+        else if (result.status === 'superseded' && result.next_job_id) await poll(result.next_job_id);
+        else if (result.status === 'pending' || result.status === 'running') await poll(saved);
+      }).catch(()=>setMessage('上一次对话暂时无法读取，请点击重新读取。')).finally(()=>{setBusy(false);generationLock.current=false;});
     }
   }, [loadGarden, poll]);
   async function propose(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if(generationLock.current)return;
     if (kind==='habit' && (!habitPlanned || !habitStandard.trim() || (habitThreshold!==null && (habitThreshold<1 || habitThreshold>habitPlanned)))) {setMessage('请检查日期、计划日和阶段完成次数。');return;}
     if (kind === 'habit' && budget && completion && Number(completion) > Number(budget)) { setMessage('核心行动的完成分钟数超过可用时间，请调整后继续。'); return; }
-    setBusy(true); setMessage(''); setPlan(null);
+    generationLock.current=true;setBusy(true); setMessage(''); setPlan(null);setTaskState('pending');
     try {
-      const response = await fetch('/api/v1/plans', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({kind, goal, background, availability:kind==='habit'?(budget?`每次最多 ${Number(budget)} 分钟`:'每次可投入时间不确定，请提出可调整的建议，不要当作用户已确认的时间。'):`${goalDays?`希望 ${Number(goalDays)} 天内完成`: '未单独指定期限，请结合目标描述；仍不确定时提出可调整的期限建议'}；${budget?`每次最多 ${Number(budget)} 分钟`:'每次可投入时间不确定，请提出可调整的建议，不要当作用户已确认的时间'}`, session_budget_minutes:budget ? Number(budget) : null, habit_completion_minutes:kind==='habit' && completion ? Number(completion) : null,habit_schedule:kind==='habit'?{start_date:habitStart,end_date:habitEnd,timezone:'Asia/Shanghai',weekdays:effectiveHabitDays,completion_standard:habitStandard,growth_threshold:oneDayHabit?1:(habitThreshold ?? habitPlanned)}:null}) });
-      const body = await response.json(); if (!response.ok) throw new Error(body.error?.message || '无法创建计划。');
-      setQuestion(''); await poll(body.id);
+      const id=await planningApi.create({kind, goal, background, availability:kind==='habit'?(budget?`每次最多 ${Number(budget)} 分钟`:'每次可投入时间不确定，请提出可调整的建议，不要当作用户已确认的时间。'):`${goalDays?`希望 ${Number(goalDays)} 天内完成`: '未单独指定期限，请结合目标描述；仍不确定时提出可调整的期限建议'}；${budget?`每次最多 ${Number(budget)} 分钟`:'每次可投入时间不确定，请提出可调整的建议，不要当作用户已确认的时间'}`, session_budget_minutes:budget ? Number(budget) : null, habit_completion_minutes:kind==='habit' && completion ? Number(completion) : null,habit_schedule:kind==='habit'?{start_date:habitStart,end_date:habitEnd,timezone:'Asia/Shanghai',weekdays:effectiveHabitDays,completion_standard:habitStandard,growth_threshold:oneDayHabit?1:(habitThreshold ?? habitPlanned)}:null});
+      setQuestion(''); await poll(id);
     } catch (error) { setMessage(error instanceof Error ? error.message : '暂时无法生成计划。'); }
-    finally { setBusy(false); }
+    finally { setBusy(false);generationLock.current=false; }
   }
   async function reply(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true); setMessage('');
+    event.preventDefault(); if(generationLock.current)return;generationLock.current=true;setBusy(true);setMessage('');
     try {
-      const res = await fetch(`/api/v1/plans/${job}/reply`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({answer})});
-      const data = await res.json(); if (!res.ok) throw new Error(data.error?.message || '暂时无法继续对话。');
-      setAnswer(''); setQuestion(''); await poll(data.id);
+      const id=await planningApi.reply(job,answer);
+      await poll(id);setAnswer('');
     } catch (error) { setMessage(error instanceof Error ? error.message : '暂时无法继续对话。'); }
-    finally { setBusy(false); }
+    finally { setBusy(false);generationLock.current=false; }
   }
   async function confirm() {
+    if(!plan||generationLock.current)return;
     if (kind==='goal' && plan?.growth_nodes && (plan.growth_nodes.some((n,i,a)=>!Number.isInteger(n) || n<1 || n>99 || (i>0 && n<=a[i-1])) || plan.growth_nodes.length!==4)) {setMessage('成长节点须为 1 到 99 的递增整数。');return;}
     if (plan?.session_actions?.some(a => a.minutes === null || a.minutes < 1)) { setMessage('请为每项行动填写大于零的分钟数。'); return; }
-    setBusy(true); setMessage('');
+    generationLock.current=true;setBusy(true); setMessage('');
     try {
-      const res = await fetch(`/api/v1/proposals/${job}/confirm`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(plan ? {...plan,flower_species:plan.flower_species ?? 'sunflower',...(kind==='goal'?{growth_nodes:plan.growth_nodes ?? [14,42,71,85]}:{})} : plan)}); const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || '种植失败。');
-      setPlan(null); localStorage.removeItem('bloomate-active-job'); setMessage('种子已种下。每一步都值得被看见。'); await loadGarden(); setSelectedPlant(data.id); setActiveView('garden'); window.dispatchEvent(new Event('bloomate-progress'));
+      const plantedId=await planningApi.confirm(job,{...plan,flower_species:plan.flower_species ?? 'sunflower',...(kind==='goal'?{growth_nodes:plan.growth_nodes ?? [14,42,71,85]}:{})});
+      setPlan(null); localStorage.removeItem('bloomate-active-job'); setMessage('种子已种下。每一步都值得被看见。'); await loadGarden(); setSelectedPlant(plantedId);setGardenTab('plants');setPlanStep(1);setJob('');setQuestion('');setEditingPlan(false); setActiveView('garden'); window.dispatchEvent(new Event('bloomate-progress'));
     } catch (error) { setMessage(error instanceof Error ? error.message : '种植失败，请重试。'); }
-    finally { setBusy(false); }
+    finally { setBusy(false);generationLock.current=false; }
   }
   function changeKind(nextKind: 'goal'|'habit') {
     if (nextKind === kind || busy) return;
-    setKind(nextKind);
+    setKind(nextKind);setPlanStep(1);setEditingPlan(false);
     setGoal(''); setBackground(''); setGoalDays(''); setBudget(''); setCompletion('');setHabitStart(beijingToday());setHabitEnd('');setHabitDays([0,1,2,3,4,5,6]);setHabitStandard('');setHabitThreshold(null);
     setQuestion(''); setAnswer(''); setPlan(null); setJob(''); setMessage('');
     setConstraints({session_budget_minutes:null, habit_completion_minutes:null});
     localStorage.removeItem('bloomate-active-job');
   }
-  return <main><header><div className="brand"><span>✿</span> Bloomate</div><div className="header-actions"><div className="notice">本机体验中 · 尚未保存到账户</div><CareBox onOpenPlant={id=>{setSelectedPlant(id);setGardenTab('plants');setActiveView('garden');}}/></div></header><nav className="main-nav" aria-label="主要功能">{([{id:'today',label:'今日行动',hint:'看看今天做什么'},{id:'plan',label:'制定计划',hint:'和园丁聊聊'},{id:'garden',label:'我的花园',hint:'管理目标与习惯'}] as const).map(item=><button key={item.id} type="button" aria-current={activeView===item.id?'page':undefined} className={activeView===item.id?'nav-item active':'nav-item'} onClick={()=>setActiveView(item.id)}><span>{item.label}</span><small>{item.hint}</small></button>)}</nav>
-    <div hidden={activeView!=='today'}><TodayActions plants={plants} gardenStatus={gardenStatus} onReloadGarden={()=>void loadGarden()} onOpenPlant={id=>{setSelectedPlant(id);setGardenTab('plants');setActiveView('garden');}} onCreate={()=>setActiveView('plan')}/></div><div hidden={activeView!=='plan'} className="plan-view"><div className="view-heading"><div><div className="eyebrow">A NEW BEGINNING</div><h1>一起种下一个想法。</h1><p>告诉园丁你的目标或习惯，我们一起找到开始的方式。</p></div></div><div className="plan-layout"><aside className="plan-aside"><div className="aside-symbol">✿</div><h2>从一小步开始</h2><p>不用想得很完整。说说你想做什么、能投入多少时间，就可以开始。</p><div className="aside-steps"><span>01 · 说出想法</span><span>02 · 看看建议</span><span>03 · 确认并种下</span></div></aside><section className="card plan-card"><div className="card-top"><span className="icon">✧</span><div><h2>和园丁聊聊</h2><p>从一个想法开始就好</p></div></div>
-      <p className="privacy">本机测试使用 DeepSeek：你填写的内容会发送至该服务处理，请勿输入敏感信息。</p><MemorySettings/><form onSubmit={propose}><div className="choice"><button type="button" disabled={busy} className={kind==='goal'?'active':''} onClick={()=>changeKind('goal')}>完成一个目标</button><button type="button" disabled={busy} className={kind==='habit'?'active':''} onClick={()=>changeKind('habit')}>培养一个习惯</button></div>
-      <label>你想做什么？<textarea required minLength={2} maxLength={500} value={goal} onChange={e=>setGoal(e.target.value)} placeholder={kind==='goal'?'例如：一个月内准备好产品经理面试':'例如：养成每天阅读的习惯'}/></label>
-      <label>现在的情况 <small>选填</small><input maxLength={1000} value={background} onChange={e=>setBackground(e.target.value)} placeholder="已有的基础、遇到的困难…"/></label>
-      {kind==='goal' && <label>希望几天内完成？ <small>选填，不确定可以留空</small><input type="number" min={1} max={3650} step={1} value={goalDays} onChange={e=>setGoalDays(e.target.value)} placeholder="例如：7"/></label>}
-      <label>每次最多可以投入多少分钟？ <small>选填，不确定可以留空</small><input type="number" min={1} max={720} step={1} value={budget} onChange={e=>setBudget(e.target.value)} placeholder="例如：20"/></label>
-      {kind==='habit' && <label>每次核心行动要做满多少分钟？ <small>选填</small><input type="number" min={1} max={720} step={1} value={completion} onChange={e=>setCompletion(e.target.value)} placeholder="例如：读满10分钟"/></label>}
-      {kind==='habit' && <fieldset className="habit-plan-schedule" disabled={busy || !!plan || !!question}><legend>先确定这个习惯的阶段周期</legend><p>园丁会按你选的日期和计划日制定计划；开始和结束同一天就是一天。</p><label>开始日期<input type="date" value={habitStart} required onChange={e=>{setHabitStart(e.target.value);setHabitThreshold(null);}}/></label><label>结束日期<input type="date" min={habitStart} value={habitEnd} required onChange={e=>{setHabitEnd(e.target.value);setHabitThreshold(null);}}/></label>{oneDayHabit ? <p className="single-day-hint">已安排这一天，完成 1 次即可达到阶段目标。</p> : <div className="weekday-choices"><span>每周哪几天做？</span>{weekdayNames.map((name,i)=><label key={name}><input type="checkbox" checked={habitDays.includes(i)} onChange={e=>{setHabitThreshold(null);setHabitDays(old=>e.target.checked?[...old,i]:old.filter(n=>n!==i));}}/>{name}</label>)}</div>}<label>每次怎样算完成？<input value={habitStandard} required maxLength={200} onChange={e=>setHabitStandard(e.target.value)} placeholder="例如：连续阅读十分钟"/></label>{!oneDayHabit && <><label>这个阶段完成多少次算达标？<input type="number" min={1} max={habitPlanned || 1} required value={habitThreshold ?? (habitPlanned || '')} onChange={e=>setHabitThreshold(e.target.value ? Number(e.target.value):null)}/></label><p className="note">{habitPlanned ? `所选周期有 ${habitPlanned} 个计划日；默认建议完成全部，可自行修改。` : '选择日期与计划日后显示可完成次数。'}</p></>}</fieldset>}
-      {kind==='habit' && (plan || question) && <button type="button" onClick={()=>{setPlan(null);setQuestion('');setJob('');localStorage.removeItem('bloomate-active-job');}}>重新设置周期并制定</button>}
-      <button className="primary" disabled={busy}>{busy?'园丁正在想一想…':'一起制定计划  →'}</button></form>
-      {message && <div className="message" role="status">{message}</div>}
-      {question && <form className="proposal" onSubmit={reply}><div className="eyebrow">园丁想再了解一点</div><p>{question}</p><label>你的回答<textarea value={answer} onChange={e=>setAnswer(e.target.value)} required maxLength={1000}/></label><button className="primary" disabled={busy}>继续对话</button></form>}
-      {plan && <div className="proposal"><div className="eyebrow">一份给你的建议</div><label>计划名称<input value={plan.title} maxLength={100} onChange={e=>setPlan({...plan, title:e.target.value})}/></label><label>计划说明<textarea value={plan.summary} maxLength={500} onChange={e=>setPlan({...plan, summary:e.target.value})}/></label><label>全程行动步骤（每行一条）<textarea value={plan.steps.join("\n")} onChange={e=>setPlan({...plan, steps:e.target.value.split("\n")})}/></label><div className="check-summary"><strong>这次种什么花？</strong><p>{plan.flower_reason && plan.flower_species ? `园丁推荐${flowerNames[plan.flower_species]}：${plan.flower_reason}` : plan.flower_species ? '已选择花种，可以再换。' : '园丁暂未给出推荐，先为你建议向日葵，可以更换。'}</p><FlowerPicker value={plan.flower_species ?? 'sunflower'} onChange={f=>setPlan({...plan,flower_species:f,flower_reason:null})}/></div>{kind==='goal' && <div className="check-summary"><strong>植物的成长节点</strong><p>按计划进度逐渐生长，你可以修改建议的百分比。完成全部步骤后开花；目标是否真正完成由你确认。</p>{!plan.growth_nodes && <p className="note">园丁没有给出节点，已使用默认建议。</p>}{['小芽','发芽','枝叶','花苞'].map((label,i)=><label key={label}>{label}（计划进度 %）<input type="number" min={1} max={99} value={(plan.growth_nodes ?? [14,42,71,85])[i]} onChange={e=>setPlan({...plan,growth_nodes:(plan.growth_nodes ?? [14,42,71,85]).map((n,j)=>j===i?Number(e.target.value):n)})}/></label>)}</div>}{constraints.habit_schedule && <div className="check-summary"><strong>本次习惯周期</strong><p>{constraints.habit_schedule.start_date} 至 {constraints.habit_schedule.end_date} · {constraints.habit_schedule.weekdays.map(d=>weekdayNames[d]).join('、')}</p><p>每次：{constraints.habit_schedule.completion_standard}；阶段完成 {constraints.habit_schedule.growth_threshold} 次。确认计划时一起保存。</p></div>}<div className="check-summary"><strong>确认前检查</strong><p>每次可用时间：{constraints.session_budget_minutes === null ? '未填写，需自行核对' : `${constraints.session_budget_minutes} 分钟`}</p>{constraints.habit_completion_minutes !== null && <p>你填写的核心行动完成标准：{constraints.habit_completion_minutes} 分钟</p>}{plan.session_actions?.length ? <div><p>第1次行动示例，合计：{plan.session_actions.reduce((sum,a)=>sum+(a.minutes ?? 0),0)} 分钟</p>{plan.session_actions.map((action,i)=><div className="action-row" key={i}><input aria-label={`第${i+1}项动作`} value={action.text} onChange={e=>setPlan({...plan,session_actions:plan.session_actions!.map((a,n)=>n===i?{...a,text:e.target.value}:a)})}/><input aria-label={`第${i+1}项分钟`} type="number" min={1} max={720} value={action.minutes ?? ''} onChange={e=>setPlan({...plan,session_actions:plan.session_actions!.map((a,n)=>n===i?{...a,minutes:e.target.value === '' ? null : Number(e.target.value)}:a)})}/><span>{action.kind==='core'?'核心行动':'准备/其他'}</span></div>)}</div> : <p>没有可自动核对的单次时间安排，请自行核对。</p>}<p className="note">程序只核对上面的单次安排及部分常见表述，无法检查全部计划的时间或事实；请逐条确认。</p></div><button className="primary" onClick={confirm} disabled={busy}>确认计划，种下种子</button><p className="note">确认前，这只是一份建议。</p></div>}
-    </section></div></div><div hidden={activeView!=='garden'} className="garden-view"><div className="view-heading"><div><div className="eyebrow">YOUR LITTLE GARDEN</div><h1>我的小花园。</h1><p>每一株植物，都记录着你正在做的事。</p></div><button type="button" className="outline-button" onClick={()=>setActiveView('plan')}>＋ 制定新计划</button></div><div className="garden-tabs" role="group" aria-label="花园内容"><button type="button" aria-pressed={gardenTab==='plants'} onClick={()=>setGardenTab('plants')}>我的植物</button><button type="button" aria-pressed={gardenTab==='collections'} onClick={()=>setGardenTab('collections')}>我的收藏</button></div>{gardenTab==='collections'?<CollectionGallery onOpenPlant={id=>{setSelectedPlant(id);setGardenTab('plants');}}/>:plants.length===0?<div className="card empty"><div className="sprout">🌱</div><h3>这里还空着一小块土地</h3><p>和园丁聊聊，种下属于你的第一株植物吧。</p><button type="button" className="text-button" onClick={()=>setActiveView('plan')}>去制定计划 →</button></div>:<div className="garden-layout"><aside className="card plant-picker"><div className="section-heading"><h2>我的植物</h2><span className="count-badge">{plants.length}</span></div><p className="muted">选择一株，查看行动与成长。</p><div className="plant-picker-list">{plants.map(plant=><button type="button" key={plant.id} className={selectedPlant===plant.id?'plant-pick active':'plant-pick'} aria-pressed={selectedPlant===plant.id} onClick={()=>setSelectedPlant(plant.id)}><span className="plant-pick-icon" aria-hidden="true">🌱</span><span><strong>{plant.title}</strong><small>{plant.kind==='goal'?'目标':'习惯'}</small></span><span className="plant-arrow" aria-hidden="true">›</span></button>)}</div></aside><section className="card garden-content" aria-label="植物详情">{selectedPlant===null && <div className="garden-placeholder"><span aria-hidden="true">✿</span><h2>选一株植物看看</h2><p>这里可以管理行动、习惯打卡和阶段成长。</p></div>}{plants.map(plant=><div key={plant.id} hidden={selectedPlant!==plant.id}><PlantCard plant={plant} onPlantChanged={loadGarden}/></div>)}</section></div>}</div><footer>慢一点也没关系，你正在生长。 ✿</footer></main>;
+  function invalidatePreview() {
+    if(plan || question || job){setPlan(null);setQuestion('');setAnswer('');setJob('');setEditingPlan(false);localStorage.removeItem('bloomate-active-job');}
+    setMessage('');
+  }
+  function startNewPlan(){setSelectedPlant(null);setActiveView('plan');}
+  async function recoverTask(){if(!job||generationLock.current)return;generationLock.current=true;setBusy(true);setMessage('');try{await poll(job);}catch(e){setMessage(e instanceof Error?e.message:'计划暂时无法读取。');}finally{generationLock.current=false;setBusy(false);}}
+  return <main className={activeView==='plan'?'workspace-plan':undefined}><header><div className="brand"><span>✿</span> Bloomate</div><div className="header-actions"><AccountControls/><CareBox onOpenPlant={id=>{setSelectedPlant(id);setGardenTab('plants');setActiveView('garden');}}/></div></header>
+    <nav className="main-nav" aria-label="主要功能">{([{id:'today',label:'今日行动',hint:'看看今天做什么'},{id:'plan',label:'制定计划',hint:'和园丁聊聊'},{id:'garden',label:'我的花园',hint:'管理目标与习惯'}] as const).map(item=><button key={item.id} type="button" aria-current={activeView===item.id?'page':undefined} className={activeView===item.id?'nav-item active':'nav-item'} onClick={()=>setActiveView(item.id)}><span>{item.label}</span><small>{item.hint}</small></button>)}</nav>
+    <div hidden={activeView!=='today'}><TodayActions plants={plants} gardenStatus={gardenStatus} onReloadGarden={()=>void loadGarden()} onOpenPlant={id=>{setSelectedPlant(id);setGardenTab('plants');setActiveView('garden');}} onCreate={startNewPlan}/></div>
+    <div hidden={activeView!=='plan'} className="plan-workflow">
+      <div className="view-heading"><div><div className="eyebrow">A NEW BEGINNING</div><h1>一起种下一个想法。</h1><p>告诉园丁你的想法，一起找到开始的方式。</p></div></div>
+      <div className="plan-flow-width">
+        <ol className="plan-stepper" aria-label="制定计划进度">{['说出想法','确定安排','确认计划'].map((label,i)=><li key={label} className={planStep===i+1?'active':planStep>i+1?'complete':''} aria-current={planStep===i+1?'step':undefined}><span>{planStep>i+1?'✓':`0${i+1}`}</span>{label}</li>)}</ol>
+        <div className="plan-main-content">
+        <h2 className="sr-only" tabIndex={-1} ref={stepHeading}>{planStep===1?'第1步：说出想法':planStep===2?'第2步：确定安排':'第3步：确认计划'}</h2>
+        {message && <p className="message" role="status">{message} {job&&!busy&&!plan&&<button type="button" className="text-button" onClick={()=>void recoverTask()}>重新读取</button>}</p>}
+        {busy && <p className="plan-task-status" role="status">{taskState==='pending'?'计划已提交，等待园丁开始…':'园丁正在处理，请稍候…'}切换页面后仍可回来查看。</p>}
+        {planStep===1 && <section className="plan-step-panel" aria-label="说出想法">
+          <div className="eyebrow">先从你想做的事开始</div><h2>你想种下什么？</h2><p className="plan-help">不用一次想清楚，先说个大概就好。</p>
+          <form onSubmit={event=>{event.preventDefault();setPlanStep(2);setMessage('');}} onChangeCapture={invalidatePreview}>
+            <fieldset disabled={busy}><div className="plan-kind-choice"><button type="button" aria-pressed={kind==='goal'} onClick={()=>changeKind('goal')}><strong>完成一个目标{kind==='goal'?' ✓':''}</strong><small>有一件想做成的事</small></button><button type="button" aria-pressed={kind==='habit'} onClick={()=>changeKind('habit')}><strong>培养一个习惯{kind==='habit'?' ✓':''}</strong><small>让一件小事慢慢持续</small></button></div>
+            <label>你希望{kind==='goal'?'完成什么':'养成什么习惯'}？<textarea required minLength={2} maxLength={500} value={goal} onChange={e=>setGoal(e.target.value)} placeholder={kind==='goal'?'例如：准备好产品经理面试':'例如：养成规律阅读的习惯'}/></label><p className="plan-help">一句话也可以，接下来再一起确定安排。</p>
+            <div className="plan-step-actions"><span className="plan-help">第 1 步，共 3 步</span><button type="submit" className="primary" disabled={busy}>继续，聊聊安排 →</button></div></fieldset>
+          </form>
+          <MemorySettings/>
+          <p className="plan-disclosure">计划内容会发送至 DeepSeek 处理，请勿填写敏感信息。切换页面保留输入；刷新会清空尚未提交的草稿。</p>
+        </section>}
+        {planStep===2 && <section className="plan-step-panel" aria-label="确定安排">
+          <div className="plan-context"><strong>{kind==='goal'?'你的目标':'想养成的习惯'}</strong><p>{goal || '已从服务端恢复对话'}</p></div>
+          {question?<form onSubmit={reply} className="plan-question"><span className="eyebrow">园丁想再了解一点</span><h2>{question}</h2><label>你的回答<textarea value={answer} onChange={e=>setAnswer(e.target.value)} required maxLength={1000} disabled={busy}/></label><div className="plan-step-actions"><button type="button" className="plan-back" disabled={busy} onClick={()=>{invalidatePreview();setPlanStep(1);}}>← 修改想法与安排</button><button type="submit" className="primary" disabled={busy}>{busy?'园丁正在想一想…':'继续对话 →'}</button></div></form>:<>
+            <h2>{kind==='goal'?'给这件事留多少时间？':'先给这个习惯定一个小周期。'}</h2>
+            <form onSubmit={propose} onChangeCapture={invalidatePreview}><fieldset disabled={busy}>
+{kind==='goal' && <><div className="plan-time-grid"><label>希望几天内完成？ <small>选填</small><input type="number" min={1} max={3650} step={1} value={goalDays} onChange={e=>setGoalDays(e.target.value)} placeholder="例如：7"/></label><label>每次最多投入几分钟？ <small>选填</small><input type="number" min={1} max={720} step={1} value={budget} onChange={e=>setBudget(e.target.value)} placeholder="例如：20"/></label></div><p className="plan-help">不确定可以留空，园丁的时间建议会单独标明。</p><label>现在有什么基础，或遇到了什么困难？ <small>选填</small><textarea maxLength={1000} value={background} onChange={e=>setBackground(e.target.value)} placeholder="已有的基础、遇到的困难…"/></label></>}
+      {kind==='habit' && <fieldset className="habit-plan-schedule" disabled={busy}><legend>先确定这个习惯的阶段周期</legend><p>园丁会按你选的日期和计划日制定计划；开始和结束同一天就是一天。</p><label>开始日期<input type="date" value={habitStart} required onChange={e=>{setHabitStart(e.target.value);setHabitThreshold(null);}}/></label><label>结束日期<input type="date" min={habitStart} value={habitEnd} required onChange={e=>{setHabitEnd(e.target.value);setHabitThreshold(null);}}/></label>{oneDayHabit ? <p className="single-day-hint">已安排这一天，完成 1 次即可达到阶段目标。</p> : <div className="weekday-choices"><span>每周哪几天做？</span>{weekdayNames.map((name,i)=><label key={name}><input type="checkbox" checked={habitDays.includes(i)} onChange={e=>{setHabitThreshold(null);setHabitDays(old=>e.target.checked?[...old,i]:old.filter(n=>n!==i));}}/>{name}</label>)}</div>}<label>每次怎样算完成？<input value={habitStandard} required maxLength={200} onChange={e=>setHabitStandard(e.target.value)} placeholder="例如：连续阅读十分钟"/></label>{!oneDayHabit && <><label>这个阶段完成多少次算达标？<input type="number" min={1} max={habitPlanned || 1} required value={habitThreshold ?? (habitPlanned || '')} onChange={e=>setHabitThreshold(e.target.value ? Number(e.target.value):null)}/></label><p className="note">{habitPlanned ? `所选周期有 ${habitPlanned} 个计划日；默认建议完成全部，可自行修改。` : '选择日期与计划日后显示可完成次数。'}</p></>}</fieldset>}
+
+              {kind==='habit' && <details className="plan-optional"><summary>补充单次时间与当前情况（选填）</summary><label>每次最多可以投入多少分钟？<input type="number" min={1} max={720} step={1} value={budget} onChange={e=>setBudget(e.target.value)} placeholder="例如：20"/></label><label>每次核心行动要做满多少分钟？<input type="number" min={1} max={720} step={1} value={completion} onChange={e=>setCompletion(e.target.value)} placeholder="例如：读满10分钟"/></label><label>现在的情况<textarea maxLength={1000} value={background} onChange={e=>setBackground(e.target.value)} placeholder="已有的基础、遇到的困难…"/></label></details>}
+              <div className="plan-step-actions"><button type="button" className="plan-back" disabled={busy} onClick={()=>setPlanStep(1)}>← 返回修改想法</button><button type="submit" className="primary" disabled={busy}>{busy?'园丁正在想一想…':plan?'重新生成建议':'看看园丁的建议 →'}</button></div>
+              {plan && <button type="button" className="text-button" onClick={()=>setPlanStep(3)}>安排未改动，返回计划预览 →</button>}
+            </fieldset></form>
+          </>}
+          <p className="plan-disclosure">时间不确定可以留空。园丁生成的是建议，确认前不会种植。</p>
+        </section>}
+{plan && planStep===3 && <section className="plan-step-panel plan-review" aria-label="确认计划"><fieldset disabled={busy}><div className="plan-review-heading"><div><span className="plan-tag">园丁建议 · 等你确认</span><h2>{plan.title}</h2><p>先看看是否适合你，再决定种下。</p></div><div className="plan-review-seed" aria-hidden="true"><FlowerArt stage={0} species={plan.flower_species ?? 'sunflower'} count={0}/></div></div><div className="plan-review-facts"><div><small>每次可用时间</small><strong>{constraints.session_budget_minutes===null?'尚未确定':`${constraints.session_budget_minutes} 分钟以内`}</strong></div><div><small>计划类型</small><strong>{kind==='goal'?'明确目标':'长期习惯'}</strong></div></div><details className="plan-edit" open={editingPlan} onToggle={e=>setEditingPlan(e.currentTarget.open)}><summary>编辑计划名称、说明和步骤</summary><label>计划名称<input value={plan.title} maxLength={100} onChange={e=>setPlan({...plan, title:e.target.value})}/></label><label>计划说明<textarea value={plan.summary} maxLength={500} onChange={e=>setPlan({...plan, summary:e.target.value})}/></label><label>全程行动步骤（每行一条）<textarea value={plan.steps.join("\n")} onChange={e=>setPlan({...plan, steps:e.target.value.split("\n")})}/></label></details>{!editingPlan && <><p className="plan-review-summary">{plan.summary}</p><ol className="plan-review-steps">{plan.steps.map((step,i)=><li key={i}><span>{String(i+1).padStart(2,'0')}</span><div>{step}</div></li>)}</ol></>}<details className="plan-advanced"><summary>花种与植物成长设置</summary><div className="check-summary"><strong>这次种什么花？</strong><p>{plan.flower_reason && plan.flower_species ? `园丁推荐${flowerNames[plan.flower_species]}：${plan.flower_reason}` : plan.flower_species ? '已选择花种，可以再换。' : '园丁暂未给出推荐，先为你建议向日葵，可以更换。'}</p><FlowerPicker value={plan.flower_species ?? 'sunflower'} onChange={f=>setPlan({...plan,flower_species:f,flower_reason:null})}/></div>{kind==='goal' && <div className="check-summary"><strong>植物的成长节点</strong><p>按计划进度逐渐生长，你可以修改建议的百分比。完成全部步骤后开花；目标是否真正完成由你确认。</p>{!plan.growth_nodes && <p className="note">园丁没有给出节点，已使用默认建议。</p>}{['小芽','发芽','枝叶','花苞'].map((label,i)=><label key={label}>{label}（计划进度 %）<input type="number" min={1} max={99} value={(plan.growth_nodes ?? [14,42,71,85])[i]} onChange={e=>setPlan({...plan,growth_nodes:(plan.growth_nodes ?? [14,42,71,85]).map((n,j)=>j===i?Number(e.target.value):n)})}/></label>)}</div>}</details>{constraints.habit_schedule && <div className="check-summary"><strong>本次习惯周期</strong><p>{constraints.habit_schedule.start_date} 至 {constraints.habit_schedule.end_date} · {constraints.habit_schedule.weekdays.map(d=>weekdayNames[d]).join('、')}</p><p>每次：{constraints.habit_schedule.completion_standard}；阶段完成 {constraints.habit_schedule.growth_threshold} 次。确认计划时一起保存。</p></div>}<div className="check-summary"><strong>确认前检查</strong><p>每次可用时间：{constraints.session_budget_minutes === null ? '未填写，需自行核对' : `${constraints.session_budget_minutes} 分钟`}</p>{constraints.habit_completion_minutes !== null && <p>你填写的核心行动完成标准：{constraints.habit_completion_minutes} 分钟</p>}{plan.session_actions?.length ? <div><p>第1次行动示例，合计：{plan.session_actions.reduce((sum,a)=>sum+(a.minutes ?? 0),0)} 分钟</p>{plan.session_actions.map((action,i)=><div className="action-row" key={i}><input aria-label={`第${i+1}项动作`} value={action.text} onChange={e=>setPlan({...plan,session_actions:plan.session_actions!.map((a,n)=>n===i?{...a,text:e.target.value}:a)})}/><input aria-label={`第${i+1}项分钟`} type="number" min={1} max={720} value={action.minutes ?? ''} onChange={e=>setPlan({...plan,session_actions:plan.session_actions!.map((a,n)=>n===i?{...a,minutes:e.target.value === '' ? null : Number(e.target.value)}:a)})}/><span>{action.kind==='core'?'核心行动':'准备/其他'}</span></div>)}</div> : <p>没有可自动核对的单次时间安排，请自行核对。</p>}<p className="note">程序只核对上面的单次安排及部分常见表述，无法检查全部计划的时间或事实；请逐条确认。</p></div><p className="plan-confirm-note">确认前只是一份建议。请核对步骤和时间；确认后才会保存到你的花园。</p><div className="plan-step-actions"><button type="button" className="plan-back" disabled={busy} onClick={()=>{setPlanStep(2);setMessage('');}}>← 返回修改安排</button><button type="button" className="primary" onClick={()=>void confirm()} disabled={busy}>{busy?'正在种下…':'确认计划，种下种子'}</button></div></fieldset></section>}
+        </div>
+      </div>
+    </div>
+    <div hidden={activeView!=='garden'} className="garden-view garden-refresh">
+      <div className="view-heading"><div><div className="eyebrow">YOUR LITTLE GARDEN</div><h1 id="garden-heading" tabIndex={-1}>我的小花园。</h1><p>每一株植物，都记录着你正在做的事。</p></div><button type="button" className="outline-button" onClick={startNewPlan}>＋ 制定新计划</button></div>
+      <div className="garden-tabs" role="group" aria-label="花园内容"><button type="button" aria-pressed={gardenTab==='plants'} onClick={()=>{setGardenTab('plants');setSelectedPlant(null);}}>我的植物</button><button type="button" aria-pressed={gardenTab==='collections'} onClick={()=>setGardenTab('collections')}>我的收藏</button></div>
+      {activeView==='garden' && (gardenTab==='collections'?<CollectionGallery onOpenPlant={id=>{setSelectedPlant(id);setGardenTab('plants');}}/>:gardenStatus!=='ready'?<div className="garden-state" role="status"><p>{gardenStatus==='error'?'花园暂时无法连接，请重试。':'正在读取你的花园…'}</p>{gardenStatus==='error'&&<button type="button" className="outline-button" onClick={()=>void loadGarden()}>重新读取花园</button>}</div>:plants.length===0?<div className="empty"><span aria-hidden="true">✿</span><h3>这里还空着一小块土地</h3><p>和园丁聊聊，种下属于你的第一株植物吧。</p><button type="button" className="text-button" onClick={startNewPlan}>去制定计划 →</button></div>:selectedPlant && plants.some(plant=>plant.id===selectedPlant)?<section className="garden-detail-panel"><button type="button" className="garden-back" onClick={()=>setSelectedPlant(null)}>← 返回我的植物</button>{plants.filter(plant=>plant.id===selectedPlant).map(plant=><PlantCard key={plant.id} plant={plant} onPlantChanged={loadGarden}/>)}</section>:<><p className="garden-overview-count">{plants.length} 株植物 · 点击查看行动与成长</p><div className="garden-overview">{plants.map(plant=><GardenPlantTile key={plant.id} plant={plant} onOpen={()=>setSelectedPlant(plant.id)}/>)}</div></>)}
+    </div>
+    <footer>慢一点也没关系，你正在生长。 ✿</footer>
+  </main>;
 }
