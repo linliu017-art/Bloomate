@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, ValidationError, model_validator
 from app.constraints import ConstraintError, validate_plan, repeats_question, asks_known_duration
 from app.identity import owner_id, acting_as, run_owned
-from app import auth, account_privacy, legal
+from app import auth, account_privacy, legal, flowers
 
 
 def load_local_config():
@@ -41,6 +41,10 @@ DB = os.environ.get('BLOOMATE_DB', str(Path(__file__).resolve().parents[2] / 'da
 
 
 def connect():
+    from app.repository import cloud_enabled
+    if cloud_enabled():
+        from app.repository.cloudbase import CloudConnection
+        return CloudConnection()
     Path(DB).parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB, timeout=10, factory=account_privacy.OwnedConnection)
     connection.row_factory = sqlite3.Row
@@ -106,6 +110,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS care_messages (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, plant_id TEXT NOT NULL REFERENCES plants(id), trigger_hash TEXT NOT NULL, created_at TEXT NOT NULL, dismissed INTEGER NOT NULL DEFAULT 0 CHECK(dismissed IN (0,1)), UNIQUE(owner_id,plant_id,trigger_hash));
         CREATE TABLE IF NOT EXISTS habit_plan_revisions (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, plant_id TEXT NOT NULL REFERENCES plants(id), stage_id TEXT NOT NULL REFERENCES habit_stages(id), base_hash TEXT NOT NULL, source_json TEXT NOT NULL, status TEXT NOT NULL, suggestion_json TEXT, before_json TEXT NOT NULL, error_code TEXT);
         ''')
+        db.executescript(flowers.SCHEMA)
         migrate_habit_stages(db)
         if 'next_job_id' not in {row['name'] for row in db.execute('PRAGMA table_info(jobs)')}:
             db.execute('ALTER TABLE jobs ADD COLUMN next_job_id TEXT')
@@ -145,6 +150,8 @@ def init_db():
 
 @asynccontextmanager
 async def lifespan(_app):
+    from app.repository import check_config
+    check_config()
     init_db()
     auth.init_schema()
     account_privacy.init_schema()
@@ -175,10 +182,19 @@ app = FastAPI(lifespan=lifespan)
 auth.install(app)
 account_privacy.install(app)
 legal.install(app)
+flowers.install(app)
 
 
 def error(code, message, status=400):
     return JSONResponse(status_code=status, content={'error': {'code': code, 'message': message}})
+
+
+@app.get('/api/health')
+def health():
+    from app.repository import cloud_enabled
+    with connect() as db:
+        db.execute('SELECT 1').fetchone()
+    return {'status': 'ok', 'storage': 'cloudbase_rest' if cloud_enabled() else 'sqlite'}
 
 
 @app.exception_handler(RequestValidationError)
@@ -313,7 +329,7 @@ class MemoryInput(BaseModel):
     content: str = Field(min_length=1,max_length=200,pattern=r'\S')
 
 class FlowerChoice(BaseModel):
-    species: Literal['sunflower','daisy','tulip']
+    species: flowers.FlowerSpecies
 
 
 class SessionAction(BaseModel):
@@ -328,7 +344,7 @@ class Plan(BaseModel):
     steps: list[Annotated[str, Field(min_length=1, max_length=500, pattern=r'\S')]] = Field(min_length=1, max_length=10)
     session_actions: list[SessionAction] | None = Field(default=None, max_length=10)
     growth_nodes: list[Annotated[int, Field(strict=True, ge=1, le=99)]] | None = Field(default=None, min_length=4, max_length=4)
-    flower_species: Literal['sunflower','daisy','tulip'] | None = None
+    flower_species: flowers.FlowerSpecies | None = None
     flower_reason: str | None = Field(default=None,max_length=160)
 
     @model_validator(mode='after')
@@ -403,6 +419,10 @@ def generate(data: dict) -> Turn:
     if not key or not base.startswith('https://') or not model:
         raise RuntimeError('MODEL_NOT_CONFIGURED')
     prompt = Path(__file__).with_name('prompt.txt').read_text(encoding='utf-8')
+    with connect() as flower_db:
+        flower_db.execute('BEGIN IMMEDIATE')
+        allowed_flowers = flowers.available_species(flower_db, owner_id())
+    prompt += '\n本次本人可用花种：' + json.dumps({r[0]:r[1] for r in flowers.FLOWERS if r[0] in allowed_flowers}, ensure_ascii=False) + '。plan.flower_species只能从此集合选择，不得推荐尚未解锁的花种，也不得声称已解锁。'
     history = data.get('history', [])
     uncertain = any(any(term in item.get('answer', '') for term in ('不确定', '不知道', '不清楚', '没想好')) for item in history)
     force_plan = len(history) >= 2 or uncertain or bool(data.get('_adjustment_force_plan')) or bool(data.get('_milestone_force_plan')) or bool(data.get('_habit_advice_force_plan')) or bool(data.get('_habit_plan_revision')) or bool(data.get('_goal_followup'))
@@ -454,6 +474,8 @@ def generate(data: dict) -> Turn:
                 prompt += '\n上次计划未通过校验：' + str(exc) + ' 请根据用户已提供的条件修正。'
             elif isinstance(exc, ValidationError):
                 prompt += '\n上次输出的字段或长度不符合要求。请重新输出有效 JSON；steps 必须为1至10条，长期计划可按周分组，session_actions 最多10项。'
+                if any('growth_nodes' in e['loc'] for e in exc.errors()):
+                    prompt += '\ngrowth_nodes 必须恰好4个严格递增整数，与steps的数量和计划天数无关；即使只有1条或3条步骤，也必须保留四个成长节点，例如[14,42,71,85]。'
             with connect() as db:
                 recorded = db.execute('SELECT 1 FROM model_call_metrics WHERE reservation_id=?', (reservation_id,)).fetchone()
             if not recorded:
@@ -470,10 +492,13 @@ def process(job_id: str, data: dict):
         result = generate(data)
         if result.plan:
             validate_plan(result.plan, data)
+            with connect() as flower_db:
+                flower_db.execute('BEGIN IMMEDIATE')
+                flowers.require_flower(flower_db, owner_id(), result.plan.flower_species)
         with connect() as db:
             db.execute("UPDATE jobs SET status='done', proposal_json=? WHERE id=? AND owner_id=?", (result.model_dump_json(), job_id, owner_id()))
     except Exception as exc:
-        code = 'PLAN_CONSTRAINT' if isinstance(exc, ConstraintError) else (str(exc) if str(exc) in ('MODEL_NOT_CONFIGURED', 'MODEL_FAILED', 'PLAN_CONSTRAINT', 'BUDGET_NOT_CONFIGURED', 'BUDGET_EXHAUSTED') else 'MODEL_FAILED')
+        code = 'FLOWER_LOCKED' if isinstance(exc, auth.AuthError) and exc.code == 'FLOWER_LOCKED' else 'PLAN_CONSTRAINT' if isinstance(exc, ConstraintError) else (str(exc) if str(exc) in ('MODEL_NOT_CONFIGURED', 'MODEL_FAILED', 'PLAN_CONSTRAINT', 'BUDGET_NOT_CONFIGURED', 'BUDGET_EXHAUSTED', 'FLOWER_LOCKED') else 'MODEL_FAILED')
         with connect() as db:
             db.execute("UPDATE jobs SET status='error', error_code=? WHERE id=? AND owner_id=?", (code, job_id, owner_id()))
 
@@ -509,7 +534,7 @@ def get_plan(job_id: str):
         except (ConstraintError, ValidationError):
             result['constraint_check'] = {'invalid': True}
     if row['status'] == 'error':
-        messages = {'MODEL_NOT_CONFIGURED': '模型尚未配置，请先完成服务商与费用确认。', 'BUDGET_NOT_CONFIGURED': '模型费用限制尚未配置。', 'BUDGET_EXHAUSTED': '已达到本月模型预算，暂时停止调用。', 'PLAN_CONSTRAINT': '计划与时间或完成标准冲突，请重新生成。'}
+        messages = {'MODEL_NOT_CONFIGURED': '模型尚未配置，请先完成服务商与费用确认。', 'BUDGET_NOT_CONFIGURED': '模型费用限制尚未配置。', 'BUDGET_EXHAUSTED': '已达到本月模型预算，暂时停止调用。', 'PLAN_CONSTRAINT': '计划与时间或完成标准冲突，请重新生成。', 'FLOWER_LOCKED': '园丁推荐了尚未解锁的花种，请重新生成或选择已拥有的花种。'}
         message = messages.get(row['error_code'], '生成未完成，请稍后重试。')
         result['error'] = {'code': row['error_code'], 'message': message}
     return result
@@ -566,6 +591,7 @@ def confirm(job_id: str, edited: Plan | None = None):
                 validate_plan(Plan.model_validate(plan), data)
             except ConstraintError as exc:
                 return error('PLAN_CONSTRAINT', str(exc), 409)
+            flowers.require_flower(db, owner_id(), plan.get('flower_species'))
             db.execute('INSERT INTO plants (id,owner_id,job_id,kind,title,plan_json) VALUES (?,?,?,?,?,?)', (plant_id, owner_id(), job_id, data['kind'], plan['title'], json.dumps(plan, ensure_ascii=False)))
             plant = db.execute('SELECT * FROM plants WHERE id=?', (plant_id,)).fetchone()
             if plant['kind']=='goal': ensure_goal_weights(db,plant)
@@ -710,6 +736,7 @@ def choose_existing_flower(plant_id: str, choice: FlowerChoice):
         if plan.get('flower_species'):
             if plan['flower_species']!=choice.species: return error('FLOWER_ALREADY_CHOSEN','这株植物已有品种。',409)
             return {'species':plan['flower_species']}
+        flowers.require_flower(db,owner_id(),choice.species)
         plan['flower_species']=choice.species
         db.execute('UPDATE plants SET plan_json=? WHERE owner_id=? AND id=?',(json.dumps(plan,ensure_ascii=False),owner_id(),plant_id))
         return {'species':choice.species}
@@ -723,6 +750,7 @@ def confirm_goal_collection(plant_id: str, data: GoalCompletionInput):
         if plant['kind']!='goal': return error('WRONG_KIND','该收藏仅用于目标。',409)
         saved=db.execute('SELECT confirmed_at,outcome FROM goal_collections WHERE owner_id=? AND plant_id=?',(owner_id(),plant_id)).fetchone()
         if saved:
+            flowers.record(db,owner_id(),'goal',plant_id,saved['confirmed_at'])
             if not saved['outcome'] and data.outcome.strip():db.execute('UPDATE goal_collections SET outcome=? WHERE owner_id=? AND plant_id=?',(data.outcome.strip(),owner_id(),plant_id))
             return {'confirmed_at':saved['confirmed_at']}
         counts=growth_counts(db,plant)
@@ -730,6 +758,7 @@ def confirm_goal_collection(plant_id: str, data: GoalCompletionInput):
             return error('INCOMPLETE','请先完成所有未取消的步骤，再确认目标完成。',409)
         confirmed_at=datetime.now(ZoneInfo('Asia/Shanghai')).isoformat()
         db.execute('INSERT INTO goal_collections VALUES (?,?,?,?,?,?)',(owner_id(),plant_id,plant['title'],plant['plan_json'],data.outcome.strip(),confirmed_at))
+        flowers.record(db,owner_id(),'goal',plant_id,confirmed_at)
         return {'confirmed_at':confirmed_at}
 
 
@@ -871,6 +900,8 @@ def habit_snapshot(db, plant, stage, standard, confirmed_at):
     entries=[dict(r) for r in db.execute('SELECT action_date,completed,enabled FROM habit_occurrences WHERE stage_id=? ORDER BY action_date',(stage['id'],))]
     snapshot={'title':plant['title'],'flower_species':json.loads(plant['plan_json']).get('flower_species'),'start_date':stage['start_date'],'end_date':stage['end_date'],'timezone':stage['timezone'],'weekdays':json.loads(stage['weekdays_json']),'completion_standard':stage['completion_standard'],'threshold':standard['threshold'],'completed':sum(bool(r['completed']) for r in entries),'entries':entries}
     db.execute('INSERT INTO habit_collections VALUES (?,?,?,?,?)',(owner_id(),plant['id'],stage['id'],json.dumps(snapshot,ensure_ascii=False),confirmed_at))
+    if snapshot['completed'] >= snapshot['threshold']:
+        flowers.record(db,owner_id(),'habit',stage['id'],confirmed_at)
 
 def finish_habit_when_ready(db, plant_id, stage, confirmed_at=None):
     plant=db.execute('SELECT * FROM plants WHERE owner_id=? AND id=?',(owner_id(),plant_id)).fetchone()
@@ -1084,6 +1115,8 @@ def choose_completion_notice(plant_id: str, data: CompletionChoice):
             db.execute('INSERT INTO habit_lifecycle VALUES (?,?,1) ON CONFLICT(owner_id,plant_id) DO UPDATE SET ended=1',(owner_id(),plant_id))
         status='finished' if data.choice=='finish' else 'continue'
         db.execute('UPDATE completion_notices SET status=? WHERE owner_id=? AND plant_id=? AND stage_id=?',(status,owner_id(),plant_id,stage_id))
+        if data.choice=='finish' and plant['kind']=='goal':
+            flowers.record(db,owner_id(),'goal',plant_id,flowers.timestamp())
         return {'status':status}
 
 @app.get('/api/v1/plants/{plant_id}/habit-stages')

@@ -149,6 +149,9 @@ for i in $(seq 1 50); do
   sleep 0.1
 done
 echo '已写入园丁后续阶段建议。'
+curl -sf "http://127.0.0.1:$PORT/api/v1/flowers" | backend/.venv/bin/python -c 'import json,sys; d=json.load(sys.stdin); assert any(f["species"]=="lavender" and f["unlocked"] for f in d["flowers"])'
+curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/flowers/seen" -H 'Content-Type: application/json' -d '{"species":["lavender"]}' >/dev/null
+echo '已写入成果解锁与花种已读状态。'
 kill "$PID"; wait "$PID" 2>/dev/null || true; PID=''
 echo '已停止服务。'
 start
@@ -190,6 +193,8 @@ curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/habit-plan-revisions/$REVISION/c
 curl -sf "http://127.0.0.1:$PORT/api/v1/auth/session" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["kind"]=="account"'
 STATUS="$(command curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/api/v1/garden")"
 [ "$STATUS" = '401' ] || { echo '未登录访问没有被拒绝。'; exit 1; }
+curl -sf "http://127.0.0.1:$PORT/api/v1/flowers" | backend/.venv/bin/python -c 'import json,sys; d=json.load(sys.stdin); f=next(f for f in d["flowers"] if f["species"]=="lavender"); assert f["unlocked"] and not f["is_new"] and d["counts"]["habit"]>=1'
+echo '重启后花种解锁、去重成果及已读状态恢复。'
 echo '重启后业务记录与可撤销会话恢复；未登录请求被拒绝，检查通过。'    
 
 # Privacy regression uses only this script's disposable database and mock provider.
@@ -212,4 +217,15 @@ start
 STATUS="$(command curl -s -b "$TMP_DIR/cookies-before-erasure" -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/api/v1/garden")"
 [ "$STATUS" = '401' ] || { echo '旧备份恢复复活了已注销账号。'; exit 1; }
 curl -sf "http://127.0.0.1:$PORT/api/v1/auth/deletion-status/$ERASURE_ID" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["status"]=="succeeded"'
+backend/.venv/bin/python - "$TMP_DIR/data.sqlite3" <<'PY_REWARDS'
+import sqlite3,sys
+with sqlite3.connect(sys.argv[1]) as db:
+    for table in ('flower_achievements','flower_unlocks'):
+        assert db.execute('SELECT count(*) FROM '+table).fetchone()[0]==0
+PY_REWARDS
+echo '旧备份恢复后，已注销账号的成果与花种奖励也未复活。'
 echo '隔离账号注销、旧会话撤销、旧备份恢复后防复活与回执查询全部通过。'
+if [ "${BLOOMATE_VERIFY_CLOUD:-0}" = '1' ]; then
+  backend/.venv/bin/python scripts/cloud_external_smoke.py verify
+  echo '真实云端重新发布后的会话、植物、完成记录与健康检查通过。'
+fi

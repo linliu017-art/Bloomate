@@ -200,6 +200,11 @@ def check_origin(request):
 
 def reserve_source_request(db, request, kind, limit):
     source = request.client.host if request.client else 'unknown'
+    if os.environ.get('CLIENT_IP_HEADER') == 'x-envoy-external-address':
+        try:
+            source = str(ipaddress.ip_address(request.headers.get('x-envoy-external-address', '')))
+        except ValueError:
+            raise AuthError('ORIGIN_DENIED', '请求来源无效。', 403) from None
     shared = os.environ.get('BLOOMATE_PROXY_SHARED_SECRET', '')
     if shared and hmac.compare_digest(request.headers.get('x-proxy-secret', ''), shared):
         try:
@@ -344,6 +349,7 @@ def install(app):
             request.state.auth = session
             public = (request.method, request.url.path) in {
                 ('GET', '/api/v1/auth/session'), ('POST', '/api/v1/auth/guest'), ('POST', '/api/v1/auth/logout'),
+                ('GET', '/api/health'),
                 ('GET', '/api/v1/legal')}
             public = public or (request.method == 'GET' and request.url.path.startswith('/api/v1/auth/deletion-status/'))
             if not public and not session:
@@ -529,11 +535,16 @@ def install(app):
                 raise AuthError('GUEST_UNAVAILABLE', '体验已到期或无法验证，请重新查看。', 410)
             if has_running_work(db, guest['owner_id']) or guest_version(db, guest['owner_id']) != row['version']:
                 raise AuthError('SAVE_CHANGED', '体验内容有变化，请重新查看保存范围。', 409)
+            from app import flowers
+            flowers.transfer_unlocks(db, guest['owner_id'], owner)
             for table in owned_tables(db):
+                if table == 'flower_unlocks':
+                    continue
                 if table in ('memory_preferences', 'care_preferences'):
                     db.execute(f'DELETE FROM {table} WHERE owner_id=?', (guest['owner_id'],))
                 else:
                     db.execute(f'UPDATE "{table}" SET owner_id=? WHERE owner_id=?', (owner, guest['owner_id']))
+            flowers.sync(db, owner)
             db.execute('UPDATE auth_subjects SET migrated_to=? WHERE id=?', (owner, guest['owner_id']))
             db.execute('UPDATE auth_sessions SET revoked=1 WHERE owner_id=?', (guest['owner_id'],))
             db.execute("UPDATE auth_saves SET status='succeeded' WHERE id=?", (row['id'],))

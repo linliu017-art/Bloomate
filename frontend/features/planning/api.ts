@@ -1,7 +1,7 @@
 export type Action = {text: string; kind: 'core'|'other'; minutes: number|null};
 export type HabitPlanSchedule = {start_date:string;end_date:string;timezone:string;weekdays:number[];completion_standard:string;growth_threshold:number};
 export type Constraints = {session_budget_minutes:number|null;habit_completion_minutes:number|null;habit_schedule?:HabitPlanSchedule|null};
-export type FlowerSpecies = 'sunflower'|'daisy'|'tulip';
+export type FlowerSpecies = 'sunflower'|'daisy'|'tulip'|'cosmos'|'lavender'|'hydrangea';
 export type Plan = {title:string;summary:string;steps:string[];session_actions?:Action[]|null;growth_nodes?:number[]|null;flower_species?:FlowerSpecies|null;flower_reason?:string|null};
 export type PlanTask = {id:string;status:'pending'|'running'|'done'|'error'|'superseded';kind:'goal'|'habit';proposal:Plan|null;question:string|null;constraints:Constraints;next_job_id?:string|null;error?:{code?:string;message:string}};
 type Input = {kind:'goal'|'habit';goal:string;background:string;availability:string;session_budget_minutes:number|null;habit_completion_minutes:number|null;habit_schedule:HabitPlanSchedule|null};
@@ -11,7 +11,7 @@ const nullableNumber = (v:unknown) => v===null || (typeof v==='number' && Number
 export function isPlan(v:unknown):v is Plan {
   return object(v) && typeof v.title==='string' && typeof v.summary==='string'
     && Array.isArray(v.steps) && v.steps.length>0 && v.steps.every(x=>typeof x==='string')
-    && (v.flower_species==null || ['sunflower','daisy','tulip'].includes(String(v.flower_species)))
+    && (v.flower_species==null || ['sunflower','daisy','tulip','cosmos','lavender','hydrangea'].includes(String(v.flower_species)))
     && (v.flower_reason==null || typeof v.flower_reason==='string')
     && (v.growth_nodes==null || (Array.isArray(v.growth_nodes) && v.growth_nodes.length===4 && v.growth_nodes.every(n=>typeof n==='number'&&Number.isFinite(n))))
     && (v.session_actions==null || (Array.isArray(v.session_actions) && v.session_actions.every(a=>object(a)&&typeof a.text==='string'&&['core','other'].includes(String(a.kind))&&nullableNumber(a.minutes))));

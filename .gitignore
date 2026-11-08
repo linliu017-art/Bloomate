@@ -21,3 +21,10 @@ docs/evidence/
 docs/项目状态.md
 designs/
 
+# Private runtime configuration and user data
+*.sqlite3*
+*.jsonl
+.venv/
+node_modules/
+.next*/
+*.log

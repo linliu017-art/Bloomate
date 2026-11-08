@@ -1,0 +1,3 @@
+
+# Isolated local visual QA build, never source or a deployment input.
+.next-flower-qa/

@@ -19,7 +19,7 @@ goal_action_states goal_action_weights goal_collections goal_followup_dates goal
 goal_next_proposals growth_events growth_standards growth_suggestions habit_advice
 habit_collections habit_lifecycle habit_next_proposals habit_plan_revisions
 habit_schedule_proposals habit_stages jobs memory_preferences plan_adjustments
-plant_pauses plants usage_reservations user_memories'''.split())
+plant_pauses plants usage_reservations user_memories flower_achievements flower_unlocks'''.split())
 CONFIRMATION = '注销Bloomate账号'
 SCHEMA = '''
 CREATE TABLE IF NOT EXISTS auth_deletion_challenges (
@@ -44,6 +44,10 @@ def journal_path(database=None):
 
 
 def journal_records(database=None):
+    from app.repository import cloud_enabled
+    if cloud_enabled():
+        from app.repository.cloudbase import gateway
+        return gateway().journal()
     path = journal_path(database)
     if not path.exists():
         return []
@@ -169,6 +173,11 @@ def purge_owner(db, owner):
 
 
 def append_erasure(owners, operation_id):
+    from app.repository import cloud_enabled
+    if cloud_enabled():
+        from app.repository.cloudbase import gateway
+        gateway().append(owners, operation_id)
+        return
     path = journal_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = ''.join(json.dumps({'owner_hash': owner_hash(o), 'operation_id': operation_id,

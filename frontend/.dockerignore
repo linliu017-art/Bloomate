@@ -1,0 +1,10 @@
+node_modules
+.next
+.next-dev
+.env
+.env.*
+tests
+*.tsbuildinfo
+*.log
+
+.next-flower-qa
