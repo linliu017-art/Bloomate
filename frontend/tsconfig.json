@@ -27,9 +27,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".next-dev/types/**/*.ts",
+    ".next-flower-qa/types/**/*.ts",
     ".next/types/**/*.ts",
-    "next-env.d.ts",
-    ".next-flower-qa/types/**/*.ts"
+    "next-env.d.ts"
   ],
   "exclude": [
     "node_modules"

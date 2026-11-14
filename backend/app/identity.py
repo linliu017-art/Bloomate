@@ -13,7 +13,7 @@ def owner_id() -> str:
 
 
 @contextmanager
-def acting_as(owner: str):
+def acting_as(owner: str | None):
     token = owner_context.set(owner)
     try:
         yield
@@ -27,7 +27,8 @@ def run_owned(owner: str, function, *args):
         # Expiry must also finish queued work, otherwise cleanup could wait forever.
         tables = {'process':'jobs', 'process_adjustment':'plan_adjustments',
                   'process_habit_plan_revision':'habit_plan_revisions',
-                  'process_growth_suggestion':'growth_suggestions', 'process_habit_advice':'habit_advice'}
+                  'process_growth_suggestion':'growth_suggestions', 'process_habit_advice':'habit_advice',
+                  'process_turn':'agent_turns'}
         table = tables.get(function.__name__)
         if table and args:
             with connect() as db:

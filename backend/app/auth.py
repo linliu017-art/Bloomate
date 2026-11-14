@@ -243,7 +243,7 @@ def session_info(request):
                 'csrf_token': None, 'cache_scope': None, 'pending_save': False, 'email_enabled': configured()}
     guest = pending_guest(request, session['owner_id']) if session['kind'] == 'account' else None
     with connect() as db:
-        pending = bool(guest and db.execute('SELECT 1 FROM jobs WHERE owner_id=? LIMIT 1', (guest['owner_id'],)).fetchone())
+        pending = bool(guest and (db.execute('SELECT 1 FROM jobs WHERE owner_id=? LIMIT 1', (guest['owner_id'],)).fetchone() or db.execute('SELECT 1 FROM agent_turns WHERE owner_id=? LIMIT 1', (guest['owner_id'],)).fetchone()))
     return {'kind': session['kind'], 'email_masked': mask_email(session['email']),
             'guest_expires_at': iso(guest['expires_at'] if guest else session['expires_at']),
             'csrf_token': csrf(session['raw']), 'cache_scope': digest(session['owner_id'])[:24],
@@ -305,7 +305,7 @@ def guest_version(db, owner):
 
 def has_running_work(db, owner):
     return any(db.execute(f'SELECT 1 FROM {table} WHERE owner_id=? AND status IN (\'pending\',\'running\')', (owner,)).fetchone()
-               for table in ('jobs', 'plan_adjustments', 'growth_suggestions', 'habit_advice', 'habit_plan_revisions'))
+               for table in ('jobs', 'plan_adjustments', 'growth_suggestions', 'habit_advice', 'habit_plan_revisions', 'agent_turns'))
 
 
 def cleanup_expired_guests():
@@ -495,7 +495,8 @@ def install(app):
         with connect() as db:
             db.execute('BEGIN IMMEDIATE')
             previous = db.execute('SELECT * FROM auth_saves WHERE account_id=? AND guest_id=?', (owner, guest['owner_id'])).fetchone()
-            if not db.execute('SELECT 1 FROM jobs WHERE owner_id=? LIMIT 1', (guest['owner_id'],)).fetchone():
+            if not (db.execute('SELECT 1 FROM jobs WHERE owner_id=? LIMIT 1', (guest['owner_id'],)).fetchone()
+                    or db.execute('SELECT 1 FROM agent_turns WHERE owner_id=? LIMIT 1', (guest['owner_id'],)).fetchone()):
                 return {'status': 'empty', 'plant_count': 0}
             if has_running_work(db, guest['owner_id']):
                 raise AuthError('WORK_RUNNING', '园丁仍在处理这次体验，请稍后再保存。', 409)

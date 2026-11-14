@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, ValidationError, model_validator
 from app.constraints import ConstraintError, validate_plan, repeats_question, asks_known_duration
 from app.identity import owner_id, acting_as, run_owned
-from app import auth, account_privacy, legal, flowers
+from app import auth, account_privacy, legal, flowers, agent
 
 
 def load_local_config():
@@ -111,6 +111,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS habit_plan_revisions (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, plant_id TEXT NOT NULL REFERENCES plants(id), stage_id TEXT NOT NULL REFERENCES habit_stages(id), base_hash TEXT NOT NULL, source_json TEXT NOT NULL, status TEXT NOT NULL, suggestion_json TEXT, before_json TEXT NOT NULL, error_code TEXT);
         ''')
         db.executescript(flowers.SCHEMA)
+        db.executescript(agent.SCHEMA)
+        db.execute("UPDATE agent_turns SET status='error',error_code='INTERRUPTED' WHERE status IN ('pending','running')")
         migrate_habit_stages(db)
         if 'next_job_id' not in {row['name'] for row in db.execute('PRAGMA table_info(jobs)')}:
             db.execute('ALTER TABLE jobs ADD COLUMN next_job_id TEXT')
@@ -156,6 +158,7 @@ async def lifespan(_app):
     auth.init_schema()
     account_privacy.init_schema()
     account_privacy.replay_erasures()
+    agent.cleanup()
     auth.cleanup_expired_guests()
     import asyncio
     async def cleanup_loop():
@@ -163,6 +166,7 @@ async def lifespan(_app):
             await asyncio.sleep(60)
             try:
                 await asyncio.to_thread(account_privacy.replay_erasures)
+                await asyncio.to_thread(agent.cleanup)
                 await asyncio.to_thread(auth.cleanup_expired_guests)
             except (sqlite3.Error, OSError, auth.AuthError):
                 import logging
@@ -395,16 +399,7 @@ def with_confirmed_memory(data: dict) -> dict:
     return result
 
 
-def generate(data: dict) -> Turn:
-    if os.environ.get('BLOOMATE_TEST_MODEL') == '1':
-        if data['goal'] == '需要澄清的目标' and not data.get('history'):
-            return Turn(question='你希望什么时候完成？')
-        limit = data.get('session_budget_minutes')
-        core = data.get('habit_completion_minutes') or limit or 10
-        actions = [SessionAction(text='测试核心行动', kind='core', minutes=core)] if limit or data.get('habit_completion_minutes') else None
-        return Turn(plan=Plan(title=data['goal'], summary='测试提案', steps=['测试步骤'], session_actions=actions))
-    if os.environ.get('MODEL_ENABLED') != '1':
-        raise RuntimeError('MODEL_NOT_CONFIGURED')
+def model_config():
     key = os.environ.get('MODEL_API_KEY', '')
     key_file = os.environ.get('MODEL_CREDENTIAL_FILE', '')
     if not key and key_file in ('.env.deepseek', '.env.qwen'):
@@ -418,6 +413,20 @@ def generate(data: dict) -> Turn:
     model = os.environ.get('MODEL_NAME', '')
     if not key or not base.startswith('https://') or not model:
         raise RuntimeError('MODEL_NOT_CONFIGURED')
+    return key, base, model
+
+
+def generate(data: dict) -> Turn:
+    if os.environ.get('BLOOMATE_TEST_MODEL') == '1':
+        if data['goal'] == '需要澄清的目标' and not data.get('history'):
+            return Turn(question='你希望什么时候完成？')
+        limit = data.get('session_budget_minutes')
+        core = data.get('habit_completion_minutes') or limit or 10
+        actions = [SessionAction(text='测试核心行动', kind='core', minutes=core)] if limit or data.get('habit_completion_minutes') else None
+        return Turn(plan=Plan(title=data['goal'], summary='测试提案', steps=['测试步骤'], session_actions=actions))
+    if os.environ.get('MODEL_ENABLED') != '1':
+        raise RuntimeError('MODEL_NOT_CONFIGURED')
+    key, base, model = model_config()
     prompt = Path(__file__).with_name('prompt.txt').read_text(encoding='utf-8')
     with connect() as flower_db:
         flower_db.execute('BEGIN IMMEDIATE')
@@ -573,37 +582,41 @@ def reply(job_id: str, data: FollowUp, background_tasks: BackgroundTasks):
 def confirm(job_id: str, edited: Plan | None = None):
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        row = db.execute('SELECT * FROM jobs WHERE id=? AND owner_id=?', (job_id, owner_id())).fetchone()
-        if row is None:
-            return error('NOT_FOUND', '没有找到这份计划。', 404)
-        if json.loads(row['input_json']).get('_goal_followup'):
-            return error('WRONG_KIND','后续阶段建议请在原目标中确认。',409)
-        if row['status'] != 'done' or not row['proposal_json'] or not json.loads(row['proposal_json']).get('plan'):
-            return error('NOT_READY', '计划尚未准备好。', 409)
-        plant = db.execute('SELECT * FROM plants WHERE job_id=? AND owner_id=?', (job_id, owner_id())).fetchone()
-        if not plant and auth.owner_is_guest(owner_id()) and db.execute('SELECT count(*) FROM plants WHERE owner_id=?', (owner_id(),)).fetchone()[0] >= 1:
-            return error('GUEST_LIMIT', '先保存当前植物到账号，就可以继续种植。', 409)
-        if not plant:
-            plant_id = str(uuid.uuid4())
-            data = json.loads(row['input_json'])
-            plan = edited.model_dump(exclude_none=True) if edited else json.loads(row['proposal_json'])['plan']
-            try:
-                validate_plan(Plan.model_validate(plan), data)
-            except ConstraintError as exc:
-                return error('PLAN_CONSTRAINT', str(exc), 409)
-            flowers.require_flower(db, owner_id(), plan.get('flower_species'))
-            db.execute('INSERT INTO plants (id,owner_id,job_id,kind,title,plan_json) VALUES (?,?,?,?,?,?)', (plant_id, owner_id(), job_id, data['kind'], plan['title'], json.dumps(plan, ensure_ascii=False)))
-            plant = db.execute('SELECT * FROM plants WHERE id=?', (plant_id,)).fetchone()
-            if plant['kind']=='goal': ensure_goal_weights(db,plant)
-            elif data.get('habit_schedule'):
-                schedule=HabitStageInput.model_validate(data['habit_schedule'])
-                stage_id=str(uuid.uuid4())
-                db.execute('INSERT INTO habit_stages (id,owner_id,plant_id,start_date,end_date,timezone,weekdays_json,completion_standard) VALUES (?,?,?,?,?,?,?,?)',(stage_id,owner_id(),plant_id,schedule.start_date.isoformat(),schedule.end_date.isoformat(),schedule.timezone,json.dumps(sorted(schedule.weekdays)),schedule.completion_standard.strip()))
-                dates=[schedule.start_date+timedelta(days=i) for i in range((schedule.end_date-schedule.start_date).days+1)]
-                db.executemany('INSERT INTO habit_occurrences (stage_id,action_date) VALUES (?,?)',[(stage_id,day.isoformat()) for day in dates if day.weekday() in schedule.weekdays])
-                db.execute('INSERT INTO growth_standards (owner_id,plant_id,threshold,achieved) VALUES (?,?,?,0)',(owner_id(),plant_id,schedule.growth_threshold))
-                growth_event(db,plant_id,'standard_confirmed',schedule.growth_threshold)
-        return {'id': plant['id'], 'title': plant['title'], 'kind': plant['kind'], 'plan': json.loads(plant['plan_json'])}
+        return confirm_plan_in_transaction(db, job_id, edited)
+
+
+def confirm_plan_in_transaction(db, job_id: str, edited: Plan | None = None):
+    row = db.execute('SELECT * FROM jobs WHERE id=? AND owner_id=?', (job_id, owner_id())).fetchone()
+    if row is None:
+        return error('NOT_FOUND', '没有找到这份计划。', 404)
+    if json.loads(row['input_json']).get('_goal_followup'):
+        return error('WRONG_KIND','后续阶段建议请在原目标中确认。',409)
+    if row['status'] != 'done' or not row['proposal_json'] or not json.loads(row['proposal_json']).get('plan'):
+        return error('NOT_READY', '计划尚未准备好。', 409)
+    plant = db.execute('SELECT * FROM plants WHERE job_id=? AND owner_id=?', (job_id, owner_id())).fetchone()
+    if not plant and auth.owner_is_guest(owner_id()) and db.execute('SELECT count(*) FROM plants WHERE owner_id=?', (owner_id(),)).fetchone()[0] >= 1:
+        return error('GUEST_LIMIT', '先保存当前植物到账号，就可以继续种植。', 409)
+    if not plant:
+        plant_id = str(uuid.uuid4())
+        data = json.loads(row['input_json'])
+        plan = edited.model_dump(exclude_none=True) if edited else json.loads(row['proposal_json'])['plan']
+        try:
+            validate_plan(Plan.model_validate(plan), data)
+        except ConstraintError as exc:
+            return error('PLAN_CONSTRAINT', str(exc), 409)
+        flowers.require_flower(db, owner_id(), plan.get('flower_species'))
+        db.execute('INSERT INTO plants (id,owner_id,job_id,kind,title,plan_json) VALUES (?,?,?,?,?,?)', (plant_id, owner_id(), job_id, data['kind'], plan['title'], json.dumps(plan, ensure_ascii=False)))
+        plant = db.execute('SELECT * FROM plants WHERE id=?', (plant_id,)).fetchone()
+        if plant['kind']=='goal': ensure_goal_weights(db,plant)
+        elif data.get('habit_schedule'):
+            schedule=HabitStageInput.model_validate(data['habit_schedule'])
+            stage_id=str(uuid.uuid4())
+            db.execute('INSERT INTO habit_stages (id,owner_id,plant_id,start_date,end_date,timezone,weekdays_json,completion_standard) VALUES (?,?,?,?,?,?,?,?)',(stage_id,owner_id(),plant_id,schedule.start_date.isoformat(),schedule.end_date.isoformat(),schedule.timezone,json.dumps(sorted(schedule.weekdays)),schedule.completion_standard.strip()))
+            dates=[schedule.start_date+timedelta(days=i) for i in range((schedule.end_date-schedule.start_date).days+1)]
+            db.executemany('INSERT INTO habit_occurrences (stage_id,action_date) VALUES (?,?)',[(stage_id,day.isoformat()) for day in dates if day.weekday() in schedule.weekdays])
+            db.execute('INSERT INTO growth_standards (owner_id,plant_id,threshold,achieved) VALUES (?,?,?,0)',(owner_id(),plant_id,schedule.growth_threshold))
+            growth_event(db,plant_id,'standard_confirmed',schedule.growth_threshold)
+    return {'id': plant['id'], 'title': plant['title'], 'kind': plant['kind'], 'plan': json.loads(plant['plan_json'])}
 
 
 @app.get('/api/v1/garden')
@@ -779,49 +792,57 @@ def get_goal_actions(plant_id: str):
 def set_goal_action(plant_id: str, index: int, update: ActionUpdate):
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        plant = db.execute('SELECT * FROM plants WHERE id=? AND owner_id=?', (plant_id, owner_id())).fetchone()
-        if not plant:
-            return error('NOT_FOUND', '没有找到这个目标。', 404)
-        if plant['kind'] != 'goal':
-            return error('WRONG_KIND', '习惯打卡将在后续阶段提供。', 409)
-        if update.completed and db.execute('SELECT 1 FROM plant_pauses WHERE owner_id=? AND plant_id=? AND end_date IS NULL',(owner_id(),plant_id)).fetchone():
-            return error('PAUSED','目标已暂停，恢复后再记录完成。',409)
-        steps = json.loads(plant['plan_json'])['steps']
-        if index < 0 or index >= len(steps):
-            return error('NOT_FOUND', '没有找到这个步骤。', 404)
-        ensure_goal_weights(db,plant)
-        if db.execute('SELECT 1 FROM goal_followups WHERE owner_id=? AND plant_id=? AND active=1',(owner_id(),plant_id)).fetchone():return error('STAGE_ARCHIVED','请在当前阶段记录行动。',409)
-        existing=db.execute('SELECT cancelled,completed FROM goal_action_states WHERE owner_id=? AND plant_id=? AND step_index=?',(owner_id(),plant_id,index)).fetchone()
-        if update.completed and existing and existing['cancelled']:
-            return error('CANCELLED','已取消的步骤需要先恢复。',409)
-        db.execute('INSERT INTO goal_action_states (owner_id,plant_id,step_index,completed) VALUES (?,?,?,?) ON CONFLICT(owner_id,plant_id,step_index) DO UPDATE SET completed=excluded.completed', (owner_id(),plant_id,index,int(update.completed)))
-        reconcile_growth(db,plant_id)
-        stage_completed=False
-        counts=growth_counts(db,plant)
-        if update.completed and (not existing or not existing['completed']) and counts['total']>0 and counts['completed']>=counts['total']:
-            saved=db.execute('SELECT 1 FROM goal_collections WHERE owner_id=? AND plant_id=?',(owner_id(),plant_id)).fetchone()
-            if not saved:
-                confirmed_at=datetime.now(ZoneInfo('Asia/Shanghai')).isoformat()
-                db.execute('INSERT INTO goal_collections VALUES (?,?,?,?,?,?)',(owner_id(),plant_id,plant['title'],plant['plan_json'],'',confirmed_at))
-                db.execute("INSERT OR IGNORE INTO completion_notices VALUES (?,?,'initial','pending')",(owner_id(),plant_id))
-                stage_completed=True
-        state=db.execute('SELECT due_date,cancelled FROM goal_action_states WHERE owner_id=? AND plant_id=? AND step_index=?',(owner_id(),plant_id,index)).fetchone()
-        return {'index': index, 'text': steps[index], 'completed': update.completed,'due_date':state['due_date'],'cancelled':bool(state['cancelled']),'stage_completed':stage_completed}
+        return record_goal_in_transaction(db, plant_id, index, update)
+
+
+def record_goal_in_transaction(db, plant_id, index, update):
+    plant = db.execute('SELECT * FROM plants WHERE id=? AND owner_id=?', (plant_id, owner_id())).fetchone()
+    if not plant:
+        return error('NOT_FOUND', '没有找到这个目标。', 404)
+    if plant['kind'] != 'goal':
+        return error('WRONG_KIND', '习惯打卡将在后续阶段提供。', 409)
+    if update.completed and db.execute('SELECT 1 FROM plant_pauses WHERE owner_id=? AND plant_id=? AND end_date IS NULL',(owner_id(),plant_id)).fetchone():
+        return error('PAUSED','目标已暂停，恢复后再记录完成。',409)
+    steps = json.loads(plant['plan_json'])['steps']
+    if index < 0 or index >= len(steps):
+        return error('NOT_FOUND', '没有找到这个步骤。', 404)
+    ensure_goal_weights(db,plant)
+    if db.execute('SELECT 1 FROM goal_followups WHERE owner_id=? AND plant_id=? AND active=1',(owner_id(),plant_id)).fetchone():return error('STAGE_ARCHIVED','请在当前阶段记录行动。',409)
+    existing=db.execute('SELECT cancelled,completed FROM goal_action_states WHERE owner_id=? AND plant_id=? AND step_index=?',(owner_id(),plant_id,index)).fetchone()
+    if update.completed and existing and existing['cancelled']:
+        return error('CANCELLED','已取消的步骤需要先恢复。',409)
+    db.execute('INSERT INTO goal_action_states (owner_id,plant_id,step_index,completed) VALUES (?,?,?,?) ON CONFLICT(owner_id,plant_id,step_index) DO UPDATE SET completed=excluded.completed', (owner_id(),plant_id,index,int(update.completed)))
+    reconcile_growth(db,plant_id)
+    stage_completed=False
+    counts=growth_counts(db,plant)
+    if update.completed and (not existing or not existing['completed']) and counts['total']>0 and counts['completed']>=counts['total']:
+        saved=db.execute('SELECT 1 FROM goal_collections WHERE owner_id=? AND plant_id=?',(owner_id(),plant_id)).fetchone()
+        if not saved:
+            confirmed_at=datetime.now(ZoneInfo('Asia/Shanghai')).isoformat()
+            db.execute('INSERT INTO goal_collections VALUES (?,?,?,?,?,?)',(owner_id(),plant_id,plant['title'],plant['plan_json'],'',confirmed_at))
+            db.execute("INSERT OR IGNORE INTO completion_notices VALUES (?,?,'initial','pending')",(owner_id(),plant_id))
+            stage_completed=True
+    state=db.execute('SELECT due_date,cancelled FROM goal_action_states WHERE owner_id=? AND plant_id=? AND step_index=?',(owner_id(),plant_id,index)).fetchone()
+    return {'index': index, 'text': steps[index], 'completed': update.completed,'due_date':state['due_date'],'cancelled':bool(state['cancelled']),'stage_completed':stage_completed}
 
 
 @app.put('/api/v1/plants/{plant_id}/actions/{index}/date')
 def set_goal_action_date(plant_id: str,index: int,data: ActionDateInput):
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        plant=db.execute('SELECT * FROM plants WHERE id=? AND owner_id=?',(plant_id,owner_id())).fetchone()
-        if not plant:return error('NOT_FOUND','没有找到这个目标。',404)
-        if plant['kind']!='goal':return error('WRONG_KIND','习惯的日期由周期管理。',409)
-        steps=json.loads(plant['plan_json'])['steps']
-        if index<0 or index>=len(steps):return error('NOT_FOUND','没有找到这个步骤。',404)
-        due=data.due_date.isoformat() if data.due_date else None
-        db.execute('INSERT INTO goal_action_states (owner_id,plant_id,step_index,completed,due_date) VALUES (?,?,?,0,?) ON CONFLICT(owner_id,plant_id,step_index) DO UPDATE SET due_date=excluded.due_date',(owner_id(),plant_id,index,due))
-        row=db.execute('SELECT completed,due_date,cancelled FROM goal_action_states WHERE owner_id=? AND plant_id=? AND step_index=?',(owner_id(),plant_id,index)).fetchone()
-        return {'index':index,'text':steps[index],'completed':bool(row['completed']),'due_date':row['due_date'],'cancelled':bool(row['cancelled'])}
+        return set_goal_date_in_transaction(db, plant_id, index, data)
+
+
+def set_goal_date_in_transaction(db, plant_id, index, data):
+    plant=db.execute('SELECT * FROM plants WHERE id=? AND owner_id=?',(plant_id,owner_id())).fetchone()
+    if not plant:return error('NOT_FOUND','没有找到这个目标。',404)
+    if plant['kind']!='goal':return error('WRONG_KIND','习惯的日期由周期管理。',409)
+    steps=json.loads(plant['plan_json'])['steps']
+    if index<0 or index>=len(steps):return error('NOT_FOUND','没有找到这个步骤。',404)
+    due=data.due_date.isoformat() if data.due_date else None
+    db.execute('INSERT INTO goal_action_states (owner_id,plant_id,step_index,completed,due_date) VALUES (?,?,?,0,?) ON CONFLICT(owner_id,plant_id,step_index) DO UPDATE SET due_date=excluded.due_date',(owner_id(),plant_id,index,due))
+    row=db.execute('SELECT completed,due_date,cancelled FROM goal_action_states WHERE owner_id=? AND plant_id=? AND step_index=?',(owner_id(),plant_id,index)).fetchone()
+    return {'index':index,'text':steps[index],'completed':bool(row['completed']),'due_date':row['due_date'],'cancelled':bool(row['cancelled'])}
 
 
 def manual_action_event(db,plant_id,index,text,event):
@@ -981,13 +1002,17 @@ def goal_stages(plant_id: str):
 def set_goal_followup_action_date(stage_id: str,index: int,data: ActionDateInput):
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        stage=db.execute('SELECT * FROM goal_followups WHERE owner_id=? AND id=? AND active=1',(owner_id(),stage_id)).fetchone()
-        if not stage:return error('NOT_FOUND','没有找到当前阶段。',404)
-        steps=json.loads(stage['steps_json']);states=json.loads(stage['states_json'])
-        if index<0 or index>=len(steps):return error('NOT_FOUND','没有找到这个步骤。',404)
-        due=data.due_date.isoformat() if data.due_date else None
-        db.execute('INSERT INTO goal_followup_dates VALUES (?,?,?,?) ON CONFLICT(owner_id,stage_id,step_index) DO UPDATE SET due_date=excluded.due_date',(owner_id(),stage_id,index,due))
-        return {'index':index,'text':steps[index],'completed':bool(states[index]),'due_date':due}
+        return set_followup_date_in_transaction(db, stage_id, index, data)
+
+
+def set_followup_date_in_transaction(db, stage_id, index, data):
+    stage=db.execute('SELECT * FROM goal_followups WHERE owner_id=? AND id=? AND active=1',(owner_id(),stage_id)).fetchone()
+    if not stage:return error('NOT_FOUND','没有找到当前阶段。',404)
+    steps=json.loads(stage['steps_json']);states=json.loads(stage['states_json'])
+    if index<0 or index>=len(steps):return error('NOT_FOUND','没有找到这个步骤。',404)
+    due=data.due_date.isoformat() if data.due_date else None
+    db.execute('INSERT INTO goal_followup_dates VALUES (?,?,?,?) ON CONFLICT(owner_id,stage_id,step_index) DO UPDATE SET due_date=excluded.due_date',(owner_id(),stage_id,index,due))
+    return {'index':index,'text':steps[index],'completed':bool(states[index]),'due_date':due}
 
 @app.post('/api/v1/plants/{plant_id}/goal-next-proposals',status_code=201)
 def propose_next_goal(plant_id: str, data: GoalNextInput):
@@ -1039,17 +1064,21 @@ def resolve_goal_next_proposal(proposal_id: str, choice: Literal['confirm','disc
 def set_goal_followup_action(stage_id: str,index: int,data: ActionUpdate):
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        row=db.execute('SELECT * FROM goal_followups WHERE owner_id=? AND id=? AND active=1',(owner_id(),stage_id)).fetchone()
-        if not row:return error('NOT_FOUND','没有找到当前阶段。',404)
-        if data.completed and db.execute('SELECT 1 FROM plant_pauses WHERE owner_id=? AND plant_id=? AND end_date IS NULL',(owner_id(),row['plant_id'])).fetchone():return error('PAUSED','目标已暂停，请先恢复。',409)
-        states=json.loads(row['states_json']);steps=json.loads(row['steps_json'])
-        if index<0 or index>=len(states):return error('NOT_FOUND','没有找到这个步骤。',404)
-        states[index]=data.completed
-        completed_at=row['completed_at'] or (datetime.now(ZoneInfo('Asia/Shanghai')).isoformat() if all(states) else None)
-        db.execute('UPDATE goal_followups SET states_json=?,completed_at=? WHERE id=? AND owner_id=?',(json.dumps(states),completed_at,stage_id,owner_id()))
-        newly_completed=bool(completed_at and not row['completed_at'])
-        if newly_completed:db.execute("INSERT OR IGNORE INTO completion_notices VALUES (?,?,?,'pending')",(owner_id(),row['plant_id'],stage_id))
-        return {'index':index,'text':steps[index],'completed':data.completed,'stage_completed':newly_completed}
+        return record_followup_in_transaction(db, stage_id, index, data)
+
+
+def record_followup_in_transaction(db, stage_id, index, data):
+    row=db.execute('SELECT * FROM goal_followups WHERE owner_id=? AND id=? AND active=1',(owner_id(),stage_id)).fetchone()
+    if not row:return error('NOT_FOUND','没有找到当前阶段。',404)
+    if data.completed and db.execute('SELECT 1 FROM plant_pauses WHERE owner_id=? AND plant_id=? AND end_date IS NULL',(owner_id(),row['plant_id'])).fetchone():return error('PAUSED','目标已暂停，请先恢复。',409)
+    states=json.loads(row['states_json']);steps=json.loads(row['steps_json'])
+    if index<0 or index>=len(states):return error('NOT_FOUND','没有找到这个步骤。',404)
+    states[index]=data.completed
+    completed_at=row['completed_at'] or (datetime.now(ZoneInfo('Asia/Shanghai')).isoformat() if all(states) else None)
+    db.execute('UPDATE goal_followups SET states_json=?,completed_at=? WHERE id=? AND owner_id=?',(json.dumps(states),completed_at,stage_id,owner_id()))
+    newly_completed=bool(completed_at and not row['completed_at'])
+    if newly_completed:db.execute("INSERT OR IGNORE INTO completion_notices VALUES (?,?,?,'pending')",(owner_id(),row['plant_id'],stage_id))
+    return {'index':index,'text':steps[index],'completed':data.completed,'stage_completed':newly_completed}
 
 @app.get('/api/v1/plants/{plant_id}/completion-notice')
 def get_completion_notice(plant_id: str):
@@ -1105,19 +1134,23 @@ def get_collections():
 def choose_completion_notice(plant_id: str, data: CompletionChoice):
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        plant=db.execute('SELECT kind FROM plants WHERE owner_id=? AND id=?',(owner_id(),plant_id)).fetchone()
-        if not plant:return error('NOT_FOUND','没有找到这株植物。',404)
-        stage=db.execute('SELECT id FROM habit_stages WHERE owner_id=? AND plant_id=? AND active=1',(owner_id(),plant_id)).fetchone() if plant['kind']=='habit' else db.execute('SELECT id FROM goal_followups WHERE owner_id=? AND plant_id=? AND active=1',(owner_id(),plant_id)).fetchone()
-        stage_id=stage['id'] if stage else ('initial' if plant['kind']=='goal' else None)
-        row=db.execute('SELECT status FROM completion_notices WHERE owner_id=? AND plant_id=? AND stage_id=?',(owner_id(),plant_id,stage_id)).fetchone()
-        if not row:return error('NOT_FOUND','没有找到完成提示。',404)
-        if data.choice=='finish' and plant['kind']=='habit':
-            db.execute('INSERT INTO habit_lifecycle VALUES (?,?,1) ON CONFLICT(owner_id,plant_id) DO UPDATE SET ended=1',(owner_id(),plant_id))
-        status='finished' if data.choice=='finish' else 'continue'
-        db.execute('UPDATE completion_notices SET status=? WHERE owner_id=? AND plant_id=? AND stage_id=?',(status,owner_id(),plant_id,stage_id))
-        if data.choice=='finish' and plant['kind']=='goal':
-            flowers.record(db,owner_id(),'goal',plant_id,flowers.timestamp())
-        return {'status':status}
+        return completion_choice_in_transaction(db, plant_id, data)
+
+
+def completion_choice_in_transaction(db, plant_id, data):
+    plant=db.execute('SELECT kind FROM plants WHERE owner_id=? AND id=?',(owner_id(),plant_id)).fetchone()
+    if not plant:return error('NOT_FOUND','没有找到这株植物。',404)
+    stage=db.execute('SELECT id FROM habit_stages WHERE owner_id=? AND plant_id=? AND active=1',(owner_id(),plant_id)).fetchone() if plant['kind']=='habit' else db.execute('SELECT id FROM goal_followups WHERE owner_id=? AND plant_id=? AND active=1',(owner_id(),plant_id)).fetchone()
+    stage_id=stage['id'] if stage else ('initial' if plant['kind']=='goal' else None)
+    row=db.execute('SELECT status FROM completion_notices WHERE owner_id=? AND plant_id=? AND stage_id=?',(owner_id(),plant_id,stage_id)).fetchone()
+    if not row:return error('NOT_FOUND','没有找到完成提示。',404)
+    if data.choice=='finish' and plant['kind']=='habit':
+        db.execute('INSERT INTO habit_lifecycle VALUES (?,?,1) ON CONFLICT(owner_id,plant_id) DO UPDATE SET ended=1',(owner_id(),plant_id))
+    status='finished' if data.choice=='finish' else 'continue'
+    db.execute('UPDATE completion_notices SET status=? WHERE owner_id=? AND plant_id=? AND stage_id=?',(status,owner_id(),plant_id,stage_id))
+    if data.choice=='finish' and plant['kind']=='goal':
+        flowers.record(db,owner_id(),'goal',plant_id,flowers.timestamp())
+    return {'status':status}
 
 @app.get('/api/v1/plants/{plant_id}/habit-stages')
 def list_habit_stages(plant_id: str):
@@ -1138,33 +1171,41 @@ def list_habit_stages(plant_id: str):
 def correct_archived_habit_occurrence(stage_id: str, action_date: date, update: HabitCheckinInput):
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        stage=db.execute('SELECT * FROM habit_stages WHERE owner_id=? AND id=?',(owner_id(),stage_id)).fetchone()
-        if not stage:return error('NOT_FOUND','没有找到这个阶段。',404)
-        if stage['active']:return error('USE_CURRENT_STAGE','请在当前阶段中修改打卡。',409)
-        if not db.execute('SELECT 1 FROM habit_collections WHERE owner_id=? AND stage_id=?',(owner_id(),stage_id)).fetchone():return error('NOT_FOUND','没有找到该阶段收藏。',404)
-        occurrence=db.execute('SELECT * FROM habit_occurrences WHERE stage_id=? AND action_date=? AND enabled=1',(stage_id,action_date.isoformat())).fetchone()
-        if not occurrence:return error('NOT_SCHEDULED','这一天不是计划日。',404)
-        if update.completed and not update.performed:return error('CONFIRM_REQUIRED','请确认当天确实完成了习惯。',422)
-        if action_date>habit_today(stage['timezone']):return error('OUTSIDE_WINDOW','不能记录未来的行动。',409)
-        if update.completed and is_paused_day(db,stage['plant_id'],action_date.isoformat()):return error('PAUSED','暂停日不能新增打卡。',409)
-        if bool(occurrence['completed'])!=update.completed:
-            recorded_at=datetime.now(ZoneInfo(stage['timezone'])).isoformat()
-            db.execute('UPDATE habit_occurrences SET completed=?,recorded_at=?,is_backfill=? WHERE stage_id=? AND action_date=?',(int(update.completed),recorded_at,int(update.completed),stage_id,action_date.isoformat()))
-            db.execute('INSERT INTO habit_events VALUES (?,?,?,?,?,?)',(str(uuid.uuid4()),stage_id,action_date.isoformat(),int(update.completed),recorded_at,int(update.completed)))
-        return {'date':action_date.isoformat(),'completed':update.completed,'history_preserved':True}
+        return record_archived_habit_in_transaction(db, stage_id, action_date, update)
+
+
+def record_archived_habit_in_transaction(db, stage_id, action_date, update):
+    stage=db.execute('SELECT * FROM habit_stages WHERE owner_id=? AND id=?',(owner_id(),stage_id)).fetchone()
+    if not stage:return error('NOT_FOUND','没有找到这个阶段。',404)
+    if stage['active']:return error('USE_CURRENT_STAGE','请在当前阶段中修改打卡。',409)
+    if not db.execute('SELECT 1 FROM habit_collections WHERE owner_id=? AND stage_id=?',(owner_id(),stage_id)).fetchone():return error('NOT_FOUND','没有找到该阶段收藏。',404)
+    occurrence=db.execute('SELECT * FROM habit_occurrences WHERE stage_id=? AND action_date=? AND enabled=1',(stage_id,action_date.isoformat())).fetchone()
+    if not occurrence:return error('NOT_SCHEDULED','这一天不是计划日。',404)
+    if update.completed and not update.performed:return error('CONFIRM_REQUIRED','请确认当天确实完成了习惯。',422)
+    if action_date>habit_today(stage['timezone']):return error('OUTSIDE_WINDOW','不能记录未来的行动。',409)
+    if update.completed and is_paused_day(db,stage['plant_id'],action_date.isoformat()):return error('PAUSED','暂停日不能新增打卡。',409)
+    if bool(occurrence['completed'])!=update.completed:
+        recorded_at=datetime.now(ZoneInfo(stage['timezone'])).isoformat()
+        db.execute('UPDATE habit_occurrences SET completed=?,recorded_at=?,is_backfill=? WHERE stage_id=? AND action_date=?',(int(update.completed),recorded_at,int(update.completed),stage_id,action_date.isoformat()))
+        db.execute('INSERT INTO habit_events VALUES (?,?,?,?,?,?)',(str(uuid.uuid4()),stage_id,action_date.isoformat(),int(update.completed),recorded_at,int(update.completed)))
+    return {'date':action_date.isoformat(),'completed':update.completed,'history_preserved':True}
 
 @app.post('/api/v1/plants/{plant_id}/habit-end')
 def end_habit(plant_id: str):
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        stage=db.execute('SELECT * FROM habit_stages WHERE owner_id=? AND plant_id=? AND active=1',(owner_id(),plant_id)).fetchone()
-        if not stage:return error('NOT_FOUND','没有找到当前习惯周期。',404)
-        standard=db.execute('SELECT * FROM growth_standards WHERE owner_id=? AND plant_id=?',(owner_id(),plant_id)).fetchone()
-        captured=db.execute('SELECT 1 FROM habit_collections WHERE owner_id=? AND stage_id=?',(owner_id(),stage['id'])).fetchone()
-        if not standard or (not standard['achieved'] and not captured):return error('NOT_ELIGIBLE','请先确认阶段成果。',409)
-        db.execute('INSERT INTO habit_lifecycle VALUES (?,?,1) ON CONFLICT(owner_id,plant_id) DO UPDATE SET ended=1',(owner_id(),plant_id))
-        db.execute("UPDATE completion_notices SET status='finished' WHERE owner_id=? AND plant_id=? AND stage_id=? AND status='pending'",(owner_id(),plant_id,stage['id']))
-        return {'ended':True}
+        return end_habit_in_transaction(db, plant_id)
+
+
+def end_habit_in_transaction(db, plant_id):
+    stage=db.execute('SELECT * FROM habit_stages WHERE owner_id=? AND plant_id=? AND active=1',(owner_id(),plant_id)).fetchone()
+    if not stage:return error('NOT_FOUND','没有找到当前习惯周期。',404)
+    standard=db.execute('SELECT * FROM growth_standards WHERE owner_id=? AND plant_id=?',(owner_id(),plant_id)).fetchone()
+    captured=db.execute('SELECT 1 FROM habit_collections WHERE owner_id=? AND stage_id=?',(owner_id(),stage['id'])).fetchone()
+    if not standard or (not standard['achieved'] and not captured):return error('NOT_ELIGIBLE','请先确认阶段成果。',409)
+    db.execute('INSERT INTO habit_lifecycle VALUES (?,?,1) ON CONFLICT(owner_id,plant_id) DO UPDATE SET ended=1',(owner_id(),plant_id))
+    db.execute("UPDATE completion_notices SET status='finished' WHERE owner_id=? AND plant_id=? AND stage_id=? AND status='pending'",(owner_id(),plant_id,stage['id']))
+    return {'ended':True}
 
 @app.post('/api/v1/plants/{plant_id}/next-stage-proposals',status_code=201)
 def propose_next_habit_stage(plant_id: str, data: HabitStageInput):
@@ -1283,31 +1324,35 @@ def get_habit_stage(plant_id: str):
 def set_habit_occurrence(plant_id: str, action_date: date, update: HabitCheckinInput):
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        stage = db.execute('SELECT s.* FROM habit_stages s JOIN plants p ON p.id=s.plant_id AND p.owner_id=s.owner_id WHERE s.owner_id=? AND s.plant_id=? AND p.kind=? AND s.active=1', (owner_id(),plant_id,'habit')).fetchone()
-        if not stage:
-            return error('NOT_FOUND', '没有找到这个习惯周期。', 404)
-        ended=db.execute('SELECT ended FROM habit_lifecycle WHERE owner_id=? AND plant_id=?',(owner_id(),plant_id)).fetchone()
-        if ended and ended['ended'] and update.completed:return error('HABIT_ENDED','这个习惯已结束，请先开启下一阶段。',409)
-        occurrence = db.execute('SELECT * FROM habit_occurrences WHERE stage_id=? AND action_date=? AND enabled=1', (stage['id'],action_date.isoformat())).fetchone()
-        if not occurrence:
-            return error('NOT_SCHEDULED', '这一天不是习惯的计划日。', 404)
-        today = habit_today(stage['timezone'])
-        if action_date > today or (update.completed and action_date < today-timedelta(days=3)):
-            return error('OUTSIDE_WINDOW', '只能打卡今天或补签之前三个自然日。', 409)
-        if update.completed and not update.performed:
-            return error('CONFIRM_REQUIRED', '请确认当天确实完成了习惯。', 422)
-        if update.completed and not occurrence['completed'] and is_paused_day(db,plant_id,action_date.isoformat()):
-            return error('PAUSED', '这一天是暂停日，不能新增打卡。', 409)
-        stage_completed=False
-        if bool(occurrence['completed']) != update.completed:
-            recorded_at = datetime.now(ZoneInfo(stage['timezone'])).isoformat()
-            backfill = action_date < today if update.completed else bool(occurrence['is_backfill'])
-            db.execute('UPDATE habit_occurrences SET completed=?, recorded_at=?, is_backfill=? WHERE stage_id=? AND action_date=?', (int(update.completed),recorded_at,int(backfill),stage['id'],action_date.isoformat()))
-            db.execute('INSERT INTO habit_events VALUES (?,?,?,?,?,?)', (str(uuid.uuid4()),stage['id'],action_date.isoformat(),int(update.completed),recorded_at,int(backfill)))
-            reconcile_growth(db,plant_id)
-            if update.completed:stage_completed=finish_habit_when_ready(db,plant_id,stage)
-        row = db.execute('SELECT * FROM habit_occurrences WHERE stage_id=? AND action_date=?',(stage['id'],action_date.isoformat())).fetchone()
-        return {'date':row['action_date'],'completed':bool(row['completed']),'recorded_at':row['recorded_at'],'is_backfill':bool(row['is_backfill']),'paused':is_paused_day(db,plant_id,row['action_date']),'stage_completed':stage_completed}
+        return record_habit_in_transaction(db, plant_id, action_date, update)
+
+
+def record_habit_in_transaction(db, plant_id, action_date, update):
+    stage = db.execute('SELECT s.* FROM habit_stages s JOIN plants p ON p.id=s.plant_id AND p.owner_id=s.owner_id WHERE s.owner_id=? AND s.plant_id=? AND p.kind=? AND s.active=1', (owner_id(),plant_id,'habit')).fetchone()
+    if not stage:
+        return error('NOT_FOUND', '没有找到这个习惯周期。', 404)
+    ended=db.execute('SELECT ended FROM habit_lifecycle WHERE owner_id=? AND plant_id=?',(owner_id(),plant_id)).fetchone()
+    if ended and ended['ended'] and update.completed:return error('HABIT_ENDED','这个习惯已结束，请先开启下一阶段。',409)
+    occurrence = db.execute('SELECT * FROM habit_occurrences WHERE stage_id=? AND action_date=? AND enabled=1', (stage['id'],action_date.isoformat())).fetchone()
+    if not occurrence:
+        return error('NOT_SCHEDULED', '这一天不是习惯的计划日。', 404)
+    today = habit_today(stage['timezone'])
+    if action_date > today or (update.completed and action_date < today-timedelta(days=3)):
+        return error('OUTSIDE_WINDOW', '只能打卡今天或补签之前三个自然日。', 409)
+    if update.completed and not update.performed:
+        return error('CONFIRM_REQUIRED', '请确认当天确实完成了习惯。', 422)
+    if update.completed and not occurrence['completed'] and is_paused_day(db,plant_id,action_date.isoformat()):
+        return error('PAUSED', '这一天是暂停日，不能新增打卡。', 409)
+    stage_completed=False
+    if bool(occurrence['completed']) != update.completed:
+        recorded_at = datetime.now(ZoneInfo(stage['timezone'])).isoformat()
+        backfill = action_date < today if update.completed else bool(occurrence['is_backfill'])
+        db.execute('UPDATE habit_occurrences SET completed=?, recorded_at=?, is_backfill=? WHERE stage_id=? AND action_date=?', (int(update.completed),recorded_at,int(backfill),stage['id'],action_date.isoformat()))
+        db.execute('INSERT INTO habit_events VALUES (?,?,?,?,?,?)', (str(uuid.uuid4()),stage['id'],action_date.isoformat(),int(update.completed),recorded_at,int(backfill)))
+        reconcile_growth(db,plant_id)
+        if update.completed:stage_completed=finish_habit_when_ready(db,plant_id,stage)
+    row = db.execute('SELECT * FROM habit_occurrences WHERE stage_id=? AND action_date=?',(stage['id'],action_date.isoformat())).fetchone()
+    return {'date':row['action_date'],'completed':bool(row['completed']),'recorded_at':row['recorded_at'],'is_backfill':bool(row['is_backfill']),'paused':is_paused_day(db,plant_id,row['action_date']),'stage_completed':stage_completed}
 
 
 def adjustment_base(db, plant):
@@ -1372,39 +1417,49 @@ def get_adjustment(adjustment_id: str):
 def confirm_adjustment(adjustment_id: str, confirmation: AdjustmentConfirmation):
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        row=db.execute('SELECT * FROM plan_adjustments WHERE id=? AND owner_id=?',(adjustment_id,owner_id())).fetchone()
-        if not row: return error('NOT_FOUND','没有找到这份调整建议。',404)
-        proposed=confirmation.steps if confirmation.steps is not None else [confirmation.text]
-        day=re.match(r'^\s*(第\s*(?:[1-9]|[一二三四五六七])\s*天)',row['original_text'])
-        if day and not any(day.group(1).replace(' ','') in step.replace(' ','') for step in proposed):
-            proposed[0]=day.group(1)+'：'+proposed[0]
-        if row['status']=='confirmed':
-            applied=json.loads(row['applied_steps_json']) if row['applied_steps_json'] else [row['applied_text']]
-            if applied != proposed: return error('ALREADY_CONFIRMED','这份建议已确认，无法重复修改。',409)
-            return {'status':'confirmed','text':row['applied_text'],'steps':applied}
-        if row['status']!='done': return error('NOT_READY','这份调整建议不能确认。',409)
-        plant=db.execute('SELECT * FROM plants WHERE id=? AND owner_id=?',(row['plant_id'],owner_id())).fetchone()
-        if not plant or adjustment_base(db,plant)!=row['base_hash']:
-            return error('PLAN_CHANGED','计划或完成状态已经改变，请重新生成建议。',409)
-        plan=json.loads(plant['plan_json'])
-        index=row['step_index'];plan['steps'][index:index+1]=proposed
-        source=json.loads(db.execute('SELECT input_json FROM jobs WHERE id=? AND owner_id=?',(plant['job_id'],owner_id())).fetchone()['input_json'])
-        try: validate_plan(Plan.model_validate(plan),source)
-        except (ConstraintError,ValidationError): return error('PLAN_CONSTRAINT','调整后的计划未通过约束检查，请修改后重试。',409)
-        ensure_goal_weights(db,plant)
-        shift=len(proposed)-1
-        if shift:
-            original_weight=db.execute('SELECT numerator,denominator FROM goal_action_weights WHERE owner_id=? AND plant_id=? AND step_index=?',(owner_id(),plant['id'],index)).fetchone()
-            share=Fraction(int(original_weight['numerator']),int(original_weight['denominator']))/len(proposed)
-            weights=db.execute('SELECT step_index FROM goal_action_weights WHERE owner_id=? AND plant_id=? AND step_index>? ORDER BY step_index DESC',(owner_id(),plant['id'],index)).fetchall()
-            for weight in weights:db.execute('UPDATE goal_action_weights SET step_index=? WHERE owner_id=? AND plant_id=? AND step_index=?',(weight['step_index']+shift,owner_id(),plant['id'],weight['step_index']))
-            db.execute('UPDATE goal_action_weights SET numerator=?,denominator=? WHERE owner_id=? AND plant_id=? AND step_index=?',(str(share.numerator),str(share.denominator),owner_id(),plant['id'],index))
-            for i in range(1,len(proposed)):db.execute('INSERT INTO goal_action_weights VALUES (?,?,?,?,?)',(owner_id(),plant['id'],index+i,str(share.numerator),str(share.denominator)))
-            existing=db.execute('SELECT step_index FROM goal_action_states WHERE owner_id=? AND plant_id=? AND step_index>? ORDER BY step_index DESC',(owner_id(),plant['id'],index)).fetchall()
-            for state in existing: db.execute('UPDATE goal_action_states SET step_index=? WHERE owner_id=? AND plant_id=? AND step_index=?',(state['step_index']+shift,owner_id(),plant['id'],state['step_index']))
-        db.execute('UPDATE plants SET plan_json=? WHERE id=? AND owner_id=?',(json.dumps(plan,ensure_ascii=False),plant['id'],owner_id()))
-        db.execute("UPDATE plan_adjustments SET status='confirmed',applied_text=?,applied_steps_json=? WHERE id=? AND owner_id=?",(proposed[0],json.dumps(proposed,ensure_ascii=False),adjustment_id,owner_id()))
-        return {'status':'confirmed','text':proposed[0],'steps':proposed}
+        return confirm_adjustment_in_transaction(db, adjustment_id, confirmation)
+
+
+def normalize_adjustment_steps(original_text, proposed):
+    proposed = list(proposed)
+    day = re.match(r'^\s*(第\s*(?:[1-9]|[一二三四五六七])\s*天)', original_text)
+    if day and not any(day.group(1).replace(' ', '') in step.replace(' ', '') for step in proposed):
+        proposed[0] = day.group(1) + '：' + proposed[0]
+    return proposed
+
+
+def confirm_adjustment_in_transaction(db, adjustment_id, confirmation):
+    row=db.execute('SELECT * FROM plan_adjustments WHERE id=? AND owner_id=?',(adjustment_id,owner_id())).fetchone()
+    if not row: return error('NOT_FOUND','没有找到这份调整建议。',404)
+    proposed=confirmation.steps if confirmation.steps is not None else [confirmation.text]
+    proposed=normalize_adjustment_steps(row['original_text'],proposed)
+    if row['status']=='confirmed':
+        applied=json.loads(row['applied_steps_json']) if row['applied_steps_json'] else [row['applied_text']]
+        if applied != proposed: return error('ALREADY_CONFIRMED','这份建议已确认，无法重复修改。',409)
+        return {'status':'confirmed','text':row['applied_text'],'steps':applied}
+    if row['status']!='done': return error('NOT_READY','这份调整建议不能确认。',409)
+    plant=db.execute('SELECT * FROM plants WHERE id=? AND owner_id=?',(row['plant_id'],owner_id())).fetchone()
+    if not plant or adjustment_base(db,plant)!=row['base_hash']:
+        return error('PLAN_CHANGED','计划或完成状态已经改变，请重新生成建议。',409)
+    plan=json.loads(plant['plan_json'])
+    index=row['step_index'];plan['steps'][index:index+1]=proposed
+    source=json.loads(db.execute('SELECT input_json FROM jobs WHERE id=? AND owner_id=?',(plant['job_id'],owner_id())).fetchone()['input_json'])
+    try: validate_plan(Plan.model_validate(plan),source)
+    except (ConstraintError,ValidationError): return error('PLAN_CONSTRAINT','调整后的计划未通过约束检查，请修改后重试。',409)
+    ensure_goal_weights(db,plant)
+    shift=len(proposed)-1
+    if shift:
+        original_weight=db.execute('SELECT numerator,denominator FROM goal_action_weights WHERE owner_id=? AND plant_id=? AND step_index=?',(owner_id(),plant['id'],index)).fetchone()
+        share=Fraction(int(original_weight['numerator']),int(original_weight['denominator']))/len(proposed)
+        weights=db.execute('SELECT step_index FROM goal_action_weights WHERE owner_id=? AND plant_id=? AND step_index>? ORDER BY step_index DESC',(owner_id(),plant['id'],index)).fetchall()
+        for weight in weights:db.execute('UPDATE goal_action_weights SET step_index=? WHERE owner_id=? AND plant_id=? AND step_index=?',(weight['step_index']+shift,owner_id(),plant['id'],weight['step_index']))
+        db.execute('UPDATE goal_action_weights SET numerator=?,denominator=? WHERE owner_id=? AND plant_id=? AND step_index=?',(str(share.numerator),str(share.denominator),owner_id(),plant['id'],index))
+        for i in range(1,len(proposed)):db.execute('INSERT INTO goal_action_weights VALUES (?,?,?,?,?)',(owner_id(),plant['id'],index+i,str(share.numerator),str(share.denominator)))
+        existing=db.execute('SELECT step_index FROM goal_action_states WHERE owner_id=? AND plant_id=? AND step_index>? ORDER BY step_index DESC',(owner_id(),plant['id'],index)).fetchall()
+        for state in existing: db.execute('UPDATE goal_action_states SET step_index=? WHERE owner_id=? AND plant_id=? AND step_index=?',(state['step_index']+shift,owner_id(),plant['id'],state['step_index']))
+    db.execute('UPDATE plants SET plan_json=? WHERE id=? AND owner_id=?',(json.dumps(plan,ensure_ascii=False),plant['id'],owner_id()))
+    db.execute("UPDATE plan_adjustments SET status='confirmed',applied_text=?,applied_steps_json=? WHERE id=? AND owner_id=?",(proposed[0],json.dumps(proposed,ensure_ascii=False),adjustment_id,owner_id()))
+    return {'status':'confirmed','text':proposed[0],'steps':proposed}
 
 
 @app.post('/api/v1/adjustments/{adjustment_id}/discard')
@@ -1448,18 +1503,22 @@ def get_pause(plant_id: str):
 def set_pause(plant_id: str, update: PauseInput):
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        plant=db.execute('SELECT * FROM plants WHERE id=? AND owner_id=?',(plant_id,owner_id())).fetchone()
-        if not plant: return error('NOT_FOUND','没有找到这株植物。',404)
-        current=db.execute('SELECT * FROM plant_pauses WHERE owner_id=? AND plant_id=? AND end_date IS NULL',(owner_id(),plant_id)).fetchone()
-        if update.paused and not current:
-            stage=db.execute('SELECT timezone FROM habit_stages WHERE owner_id=? AND plant_id=? AND active=1',(owner_id(),plant_id)).fetchone()
-            timezone=stage['timezone'] if stage else 'Asia/Shanghai'
-            db.execute('INSERT INTO plant_pauses (id,owner_id,plant_id,timezone,start_date) VALUES (?,?,?,?,?)',(str(uuid.uuid4()),owner_id(),plant_id,timezone,habit_today(timezone).isoformat()))
-        elif not update.paused and current:
-            today=habit_today(current['timezone']).isoformat()
-            if today < current['start_date']: return error('CLOCK_CHANGED','当前日期早于暂停日期，请检查系统时间。',409)
-            db.execute('UPDATE plant_pauses SET end_date=? WHERE id=? AND owner_id=?',(today,current['id'],owner_id()))
-        return pause_view(db,plant)
+        return pause_in_transaction(db, plant_id, update)
+
+
+def pause_in_transaction(db, plant_id, update):
+    plant=db.execute('SELECT * FROM plants WHERE id=? AND owner_id=?',(plant_id,owner_id())).fetchone()
+    if not plant: return error('NOT_FOUND','没有找到这株植物。',404)
+    current=db.execute('SELECT * FROM plant_pauses WHERE owner_id=? AND plant_id=? AND end_date IS NULL',(owner_id(),plant_id)).fetchone()
+    if update.paused and not current:
+        stage=db.execute('SELECT timezone FROM habit_stages WHERE owner_id=? AND plant_id=? AND active=1',(owner_id(),plant_id)).fetchone()
+        timezone=stage['timezone'] if stage else 'Asia/Shanghai'
+        db.execute('INSERT INTO plant_pauses (id,owner_id,plant_id,timezone,start_date) VALUES (?,?,?,?,?)',(str(uuid.uuid4()),owner_id(),plant_id,timezone,habit_today(timezone).isoformat()))
+    elif not update.paused and current:
+        today=habit_today(current['timezone']).isoformat()
+        if today < current['start_date']: return error('CLOCK_CHANGED','当前日期早于暂停日期，请检查系统时间。',409)
+        db.execute('UPDATE plant_pauses SET end_date=? WHERE id=? AND owner_id=?',(today,current['id'],owner_id()))
+    return pause_view(db,plant)
 
 
 def habit_schedule_hash(db, stage, include_start=True):
@@ -1853,3 +1912,6 @@ def get_habit_advice(advice_id: str):
         result={'id':row['id'],'status':row['status'],'suggestion':row['suggestion']}
         if row['status']=='error':result['error']={'code':row['error_code'],'message':'建议生成失败，请稍后重试。'}
         return result
+
+
+agent.install(app)

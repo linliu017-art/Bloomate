@@ -28,3 +28,8 @@ designs/
 node_modules/
 .next*/
 *.log
+
+# Local private verification reports
+docs/评测/阶段3-*/
+docs/评测/阶段3-*.json
+docs/评测/阶段3-*.md

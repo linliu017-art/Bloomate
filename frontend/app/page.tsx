@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import {AuthBoundary, AccountControls} from '../features/auth/AuthBoundary';
 import {apiFetch as fetch} from '../features/auth/api';
+import {Gardener} from '../features/agent/Gardener';
 
 import {createPlanningApi, type Constraints, type FlowerSpecies, type Plan} from '../features/planning/api';
 const planningApi=createPlanningApi(fetch);
@@ -323,15 +324,15 @@ function GoalActions({plantId,paused}: {plantId: string;paused:boolean}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(''); const [feedback,setFeedback]=useState('');
   const [suggestedDate,setSuggestedDate] = useState('');
-  const refresh = useCallback(async () => {const r=await fetch(`/api/v1/plants/${plantId}/actions`);if(!r.ok)throw new Error('无法读取计划步骤。');const data=await r.json();setActions(data.actions);},[plantId]);
+  const actionReadEpoch=useRef(0);
+  const refresh = useCallback(async () => {const version=++actionReadEpoch.current;const r=await fetch(`/api/v1/plants/${plantId}/actions`);if(!r.ok)throw new Error('无法读取计划步骤。');const data=await r.json();if(version===actionReadEpoch.current){setActions(data.actions);setError('');}},[plantId]);
+  const invalidateActions=useCallback(()=>{actionReadEpoch.current++;},[]);
   useEffect(() => {
-    let active = true;
-    fetch(`/api/v1/plants/${plantId}/actions`).then(async r => {
-      if (!r.ok) throw new Error();
-      const data = await r.json(); if (active) setActions(data.actions);
-    }).catch(() => {if (active) setError('计划步骤暂时无法读取，请刷新重试。');}).finally(() => {if (active) setLoading(false);});
-    return () => {active = false;};
-  }, [plantId]);
+    let active=true;
+    const changed=()=>{void refresh().catch(()=>{if(active)setError('计划步骤暂时无法读取，请刷新重试。');}).finally(()=>{if(active)setLoading(false);});};
+    changed();window.addEventListener('bloomate-progress',changed);
+    return()=>{active=false;invalidateActions();window.removeEventListener('bloomate-progress',changed);};
+  },[refresh,invalidateActions]);
   async function toggle(action: GoalAction) {
     setBusy(true); setError('');
     try {
@@ -379,7 +380,7 @@ function HabitPlanRevisionCard({plant,onChanged}:{plant:Plant;onChanged:()=>Prom
 function PlantCard({plant,onPlantChanged}: {plant:Plant;onPlantChanged:()=>Promise<void>}) {
   const [pause,setPause]=useState<PauseState|null>(null);const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [completionStatus,setCompletionStatus]=useState<string|null>(null);const [species,setSpecies]=useState<FlowerSpecies|null>(plant.plan.flower_species ?? null);const [habitDisplay,setHabitDisplay]=useState({count:0,current:false});const setHistoryDisplay=useCallback((count:number,current:boolean)=>setHabitDisplay(old=>old.count===count && old.current===current ? old : {count,current}),[]);const [choice,setChoice]=useState<FlowerSpecies>('sunflower');const [goalActive,setGoalActive]=useState(false);
   useEffect(()=>{const refresh=()=>void fetch(`/api/v1/plants/${plant.id}/completion-notice`).then(r=>r.ok?r.json():null).then(d=>setCompletionStatus(d?.status||null)).catch(()=>setCompletionStatus(null));refresh();window.addEventListener('bloomate-progress',refresh);return()=>window.removeEventListener('bloomate-progress',refresh);},[plant.id]);
-  useEffect(()=>{void fetch(`/api/v1/plants/${plant.id}/pause`).then(async r=>{if(!r.ok)throw new Error();setPause(await r.json());}).catch(()=>setError('暂时无法读取暂停状态。'));},[plant.id]);
+  useEffect(()=>{let active=true,sequence=0;const refresh=()=>{const version=++sequence;void fetch(`/api/v1/plants/${plant.id}/pause`).then(async r=>{if(!r.ok)throw new Error();const value=await r.json();if(active&&version===sequence)setPause(value);}).catch(()=>{if(active)setError('暂时无法读取暂停状态。');});};refresh();window.addEventListener('bloomate-progress',refresh);return()=>{active=false;sequence++;window.removeEventListener('bloomate-progress',refresh);};},[plant.id]);
   async function saveFlower(){setBusy(true);setError('');try{const r=await fetch(`/api/v1/plants/${plant.id}/flower`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({species:choice})});const d=await r.json();if(!r.ok)throw new Error(d.error?.message || '无法保存花种。');setSpecies(d.species);}catch(e){setError(e instanceof Error?e.message:'无法保存花种。');}finally{setBusy(false);}}
   async function togglePause() {
     if(!pause)return;setBusy(true);setError('');
@@ -437,6 +438,7 @@ function BloomateApp() {
     try { const res = await fetch('/api/v1/garden'); if (!res.ok) throw new Error(); const data = await res.json(); setPlants(data.plants); setGardenStatus('ready'); }
     catch { setGardenStatus('error'); setMessage('花园暂时无法连接，请检查本地服务。'); }
   }, []);
+  useEffect(()=>{const refresh=()=>void loadGarden();window.addEventListener('bloomate-progress',refresh);return()=>window.removeEventListener('bloomate-progress',refresh);},[loadGarden]);
   const poll = useCallback(async function pollJob(jobId: string): Promise<void> {
     setJob(jobId); localStorage.setItem('bloomate-active-job', jobId);
     for (let i = 0; i < 75; i++) {
@@ -554,6 +556,7 @@ function BloomateApp() {
       <div className="garden-tabs" role="group" aria-label="花园内容"><button type="button" aria-pressed={gardenTab==='plants'} onClick={()=>{setGardenTab('plants');setSelectedPlant(null);}}>我的植物</button><button type="button" aria-pressed={gardenTab==='collections'} onClick={()=>setGardenTab('collections')}>我的收藏</button><FlowerAtlasTrigger/></div>
       {activeView==='garden' && (gardenTab==='collections'?<CollectionGallery onOpenPlant={id=>{setSelectedPlant(id);setGardenTab('plants');}}/>:gardenStatus!=='ready'?<div className="garden-state" role="status"><p>{gardenStatus==='error'?'花园暂时无法连接，请重试。':'正在读取你的花园…'}</p>{gardenStatus==='error'&&<button type="button" className="outline-button" onClick={()=>void loadGarden()}>重新读取花园</button>}</div>:plants.length===0?<div className="empty"><span aria-hidden="true">✿</span><h3>这里还空着一小块土地</h3><p>和园丁聊聊，种下属于你的第一株植物吧。</p><button type="button" className="text-button" onClick={startNewPlan}>去制定计划 →</button></div>:selectedPlant && plants.some(plant=>plant.id===selectedPlant)?<section className="garden-detail-panel"><button type="button" className="garden-back" onClick={()=>setSelectedPlant(null)}>← 返回我的植物</button>{plants.filter(plant=>plant.id===selectedPlant).map(plant=><PlantCard key={plant.id} plant={plant} onPlantChanged={loadGarden}/>)}</section>:<><p className="garden-overview-count">{plants.length} 株植物 · 点击查看行动与成长</p><div className="garden-overview">{plants.map(plant=><GardenPlantTile key={plant.id} plant={plant} onOpen={()=>setSelectedPlant(plant.id)}/>)}</div></>)}
     </div>
+    <Gardener context={{page:activeView,plant_id:activeView==='garden'&&gardenTab==='plants'?selectedPlant:null}} onOpenPlant={id=>{setSelectedPlant(id);setGardenTab('plants');setActiveView('garden');}}/>
     <footer>慢一点也没关系，你正在生长。 ✿</footer>
   </main>;
 }

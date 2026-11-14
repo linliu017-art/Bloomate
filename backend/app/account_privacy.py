@@ -19,7 +19,8 @@ goal_action_states goal_action_weights goal_collections goal_followup_dates goal
 goal_next_proposals growth_events growth_standards growth_suggestions habit_advice
 habit_collections habit_lifecycle habit_next_proposals habit_plan_revisions
 habit_schedule_proposals habit_stages jobs memory_preferences plan_adjustments
-plant_pauses plants usage_reservations user_memories flower_achievements flower_unlocks'''.split())
+plant_pauses plants usage_reservations user_memories flower_achievements flower_unlocks
+agent_sessions agent_turns'''.split())
 CONFIRMATION = '注销Bloomate账号'
 SCHEMA = '''
 CREATE TABLE IF NOT EXISTS auth_deletion_challenges (

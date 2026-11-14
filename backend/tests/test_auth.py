@@ -230,7 +230,7 @@ def test_every_business_route_requires_identity_before_validation(server):
             response = server.request(method, url, json={})
             assert response.status_code == 401, (method, path, response.text)
             methods_checked += 1
-    assert methods_checked == 68  # Existing 66 routes plus flower catalog and seen acknowledgment.
+    assert methods_checked == 79  # Existing 68, five queries and two actions each for drafts/changes/records.
 
 
 def test_failed_transfer_rolls_back_and_retry_uses_original_operation(server):

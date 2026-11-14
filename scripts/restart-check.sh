@@ -152,6 +152,26 @@ echo '已写入园丁后续阶段建议。'
 curl -sf "http://127.0.0.1:$PORT/api/v1/flowers" | backend/.venv/bin/python -c 'import json,sys; d=json.load(sys.stdin); assert any(f["species"]=="lavender" and f["unlocked"] for f in d["flowers"])'
 curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/flowers/seen" -H 'Content-Type: application/json' -d '{"species":["lavender"]}' >/dev/null
 echo '已写入成果解锁与花种已读状态。'
+AGENT_REQUEST="$(backend/.venv/bin/python -c 'import json,uuid; print(json.dumps({"request_id":str(uuid.uuid4()),"text":"今天要做什么","context":{"page":"today"}}))')"
+AGENT_TURN="$(curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/agent/turns" -H 'Content-Type: application/json' -d "$AGENT_REQUEST" | backend/.venv/bin/python -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
+for i in $(seq 1 50); do
+  AGENT_STATE="$(curl -sf "http://127.0.0.1:$PORT/api/v1/agent/turns/$AGENT_TURN")"
+  if printf '%s' "$AGENT_STATE" | backend/.venv/bin/python -c 'import json,sys; sys.exit(json.load(sys.stdin)["status"]!="done")'; then break; fi
+  sleep 0.1
+done
+printf '%s' "$AGENT_STATE" | backend/.venv/bin/python -c 'import json,sys; d=json.load(sys.stdin); assert d["status"]=="done" and d["result"]["kind"]=="today"'
+echo '已持久化园丁只读查询会话（本项模型为mock）。'
+
+AGENT_PLAN_REQUEST="$(backend/.venv/bin/python -c 'import json,uuid; print(json.dumps({"request_id":str(uuid.uuid4()),"text":"创建目标：重启恢复的对话草案","context":{"page":"today"}}))')"
+AGENT_PLAN_TURN="$(curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/agent/turns" -H 'Content-Type: application/json' -d "$AGENT_PLAN_REQUEST" | backend/.venv/bin/python -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
+for i in $(seq 1 50); do
+  AGENT_PLAN_STATE="$(curl -sf "http://127.0.0.1:$PORT/api/v1/agent/turns/$AGENT_PLAN_TURN")"
+  if printf '%s' "$AGENT_PLAN_STATE" | backend/.venv/bin/python -c 'import json,sys; sys.exit(json.load(sys.stdin)["status"]!="done")'; then break; fi
+  sleep 0.1
+done
+printf '%s' "$AGENT_PLAN_STATE" | backend/.venv/bin/python -c 'import json,sys; d=json.load(sys.stdin)["result"]["data"]; assert d["state"]=="ready"; print(json.dumps({"version":d["version"],"plan":d["proposal"],"goal_dates":d["goal_dates"]}))' > "$TMP_DIR/agent-confirm.json"
+echo '已持久化待确认对话草案（本项模型为mock）。'
+
 kill "$PID"; wait "$PID" 2>/dev/null || true; PID=''
 echo '已停止服务。'
 start
@@ -194,6 +214,58 @@ curl -sf "http://127.0.0.1:$PORT/api/v1/auth/session" | backend/.venv/bin/python
 STATUS="$(command curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/api/v1/garden")"
 [ "$STATUS" = '401' ] || { echo '未登录访问没有被拒绝。'; exit 1; }
 curl -sf "http://127.0.0.1:$PORT/api/v1/flowers" | backend/.venv/bin/python -c 'import json,sys; d=json.load(sys.stdin); f=next(f for f in d["flowers"] if f["species"]=="lavender"); assert f["unlocked"] and not f["is_new"] and d["counts"]["habit"]>=1'
+curl -sf "http://127.0.0.1:$PORT/api/v1/agent/turns/$AGENT_TURN" | backend/.venv/bin/python -c 'import json,sys; d=json.load(sys.stdin); assert d["status"]=="done" and d["result"]["kind"]=="today"'
+echo '重启后园丁会话、查询结果及30天期限记录恢复。'
+
+curl -sf "http://127.0.0.1:$PORT/api/v1/agent/turns/$AGENT_PLAN_TURN" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["result"]["data"]["state"]=="ready"'
+AGENT_PLANTED="$(curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/agent/turns/$AGENT_PLAN_TURN/confirm" -H 'Content-Type: application/json' --data-binary "@$TMP_DIR/agent-confirm.json" | backend/.venv/bin/python -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
+
+CHANGE_REQUEST="$(backend/.venv/bin/python -c 'import json,uuid,sys; print(json.dumps({"request_id":str(uuid.uuid4()),"text":"调整日期：明天","context":{"page":"garden","plant_id":sys.argv[1]}}))' "$AGENT_PLANTED")"
+CHANGE_TURN="$(curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/agent/turns" -H 'Content-Type: application/json' -d "$CHANGE_REQUEST" | backend/.venv/bin/python -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
+for i in $(seq 1 50); do
+  CHANGE_STATE="$(curl -sf "http://127.0.0.1:$PORT/api/v1/agent/turns/$CHANGE_TURN")"
+  if printf '%s' "$CHANGE_STATE" | backend/.venv/bin/python -c 'import json,sys; sys.exit(json.load(sys.stdin)["status"]!="done")'; then break; fi
+  sleep 0.1
+done
+printf '%s' "$CHANGE_STATE" | backend/.venv/bin/python -c 'import json,sys; d=json.load(sys.stdin)["result"]["data"]; assert d["state"]=="ready"; print(json.dumps({"version":d["version"],"due_date":d["after"]["due_date"]}))' > "$TMP_DIR/agent-change-confirm.json"
+echo '已持久化待确认日期修改（本项模型为mock）。'
+
+kill "$PID"; wait "$PID" 2>/dev/null || true; PID=''
+start
+curl -sf "http://127.0.0.1:$PORT/api/v1/agent/turns/$AGENT_PLAN_TURN" | backend/.venv/bin/python -c 'import json,sys; d=json.load(sys.stdin)["result"]["data"]; assert d["state"]=="confirmed" and d["plant_id"]==sys.argv[1]' "$AGENT_PLANTED"
+curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/agent/turns/$AGENT_PLAN_TURN/confirm" -H 'Content-Type: application/json' --data-binary "@$TMP_DIR/agent-confirm.json" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["id"]==sys.argv[1]' "$AGENT_PLANTED"
+curl -sf "http://127.0.0.1:$PORT/api/v1/today" | backend/.venv/bin/python -c 'import json,sys; assert any(a["plant_id"]==sys.argv[1] for a in json.load(sys.stdin)["goals_today"])' "$AGENT_PLANTED"
+echo '实际重启恢复待确认草案、确认种植及再次重启后的幂等结果，今日行动一致。'
+
+curl -sf "http://127.0.0.1:$PORT/api/v1/agent/turns/$CHANGE_TURN" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["result"]["data"]["state"]=="ready"'
+curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/agent/changes/$CHANGE_TURN/confirm" -H 'Content-Type: application/json' --data-binary "@$TMP_DIR/agent-change-confirm.json" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["status"]=="confirmed"'
+kill "$PID"; wait "$PID" 2>/dev/null || true; PID=''
+start
+curl -sf "http://127.0.0.1:$PORT/api/v1/agent/turns/$CHANGE_TURN" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["result"]["data"]["state"]=="confirmed"'
+curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/agent/changes/$CHANGE_TURN/confirm" -H 'Content-Type: application/json' --data-binary "@$TMP_DIR/agent-change-confirm.json" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["status"]=="confirmed"'
+curl -sf "http://127.0.0.1:$PORT/api/v1/plants/$AGENT_PLANTED/actions" | backend/.venv/bin/python -c 'import json,sys; expected=json.load(open(sys.argv[1]))["due_date"]; assert json.load(sys.stdin)["actions"][0]["due_date"]==expected' "$TMP_DIR/agent-change-confirm.json"
+echo '实际重启恢复修改预览、确认后再次重启及幂等重试，业务日期一致。'
+
+RECORD_REQUEST="$(backend/.venv/bin/python -c 'import json,uuid,sys; print(json.dumps({"request_id":str(uuid.uuid4()),"text":"记录完成：重启验收","context":{"page":"garden","plant_id":sys.argv[1]}}))' "$AGENT_PLANTED")"
+RECORD_TURN="$(curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/agent/turns" -H 'Content-Type: application/json' -d "$RECORD_REQUEST" | backend/.venv/bin/python -c 'import json,sys; print(json.load(sys.stdin)["id"])')"
+for i in $(seq 1 50); do
+  RECORD_STATE="$(curl -sf "http://127.0.0.1:$PORT/api/v1/agent/turns/$RECORD_TURN")"
+  if printf '%s' "$RECORD_STATE" | backend/.venv/bin/python -c 'import json,sys; sys.exit(json.load(sys.stdin)["status"]!="done")'; then break; fi
+  sleep 0.1
+done
+printf '%s' "$RECORD_STATE" | backend/.venv/bin/python -c 'import json,sys; d=json.load(sys.stdin)["result"]["data"]; assert d["state"]=="ready"; print(json.dumps({"version":d["version"],"performed":True}))' > "$TMP_DIR/agent-record-confirm.json"
+kill "$PID"; wait "$PID" 2>/dev/null || true; PID=''
+start
+curl -sf "http://127.0.0.1:$PORT/api/v1/agent/turns/$RECORD_TURN" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["result"]["data"]["state"]=="ready"'
+curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/agent/records/$RECORD_TURN/confirm" -H 'Content-Type: application/json' --data-binary "@$TMP_DIR/agent-record-confirm.json" | backend/.venv/bin/python -c 'import json,sys; d=json.load(sys.stdin); assert d["status"]=="confirmed" and d["completed"]'
+kill "$PID"; wait "$PID" 2>/dev/null || true; PID=''
+start
+curl -sf "http://127.0.0.1:$PORT/api/v1/agent/turns/$RECORD_TURN" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["result"]["data"]["state"]=="confirmed"'
+curl -sf -X POST "http://127.0.0.1:$PORT/api/v1/agent/records/$RECORD_TURN/confirm" -H 'Content-Type: application/json' --data-binary "@$TMP_DIR/agent-record-confirm.json" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["completed"]'
+curl -sf "http://127.0.0.1:$PORT/api/v1/plants/$AGENT_PLANTED/actions" | backend/.venv/bin/python -c 'import json,sys; assert json.load(sys.stdin)["actions"][0]["completed"]'
+echo '实际重启恢复待确认行动记录，确认后再次重启及同体重试；正式完成与收藏不重复。'
+
+
 echo '重启后花种解锁、去重成果及已读状态恢复。'
 echo '重启后业务记录与可撤销会话恢复；未登录请求被拒绝，检查通过。'    
 
